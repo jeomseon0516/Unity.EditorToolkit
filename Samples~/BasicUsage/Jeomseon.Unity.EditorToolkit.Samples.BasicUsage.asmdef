@@ -1,0 +1,7 @@
+{
+  "name": "Jeomseon.Unity.EditorToolkit.Samples.BasicUsage",
+  "references": [
+    "Jeomseon.Unity.Attributes",
+    "Jeomseon.Unity.EditorToolkit"
+  ]
+}

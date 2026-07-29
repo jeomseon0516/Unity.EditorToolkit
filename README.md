@@ -7,7 +7,7 @@
 OpenUPM 등록 전에는 Package Manager의 **Add package from git URL**에서 다음 주소를 사용합니다.
 
 ```text
-https://github.com/jeomseon0516/Unity.EditorToolkit.git#v0.3.0
+https://github.com/jeomseon0516/Unity.EditorToolkit.git#v0.3.1
 ```
 
 ## Inspector 확장 방식

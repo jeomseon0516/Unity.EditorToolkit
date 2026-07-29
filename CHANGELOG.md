@@ -1,5 +1,9 @@
 # 변경 기록
 
+## [0.3.1] - 2026-07-29
+
+- Inspector Injection과 값 변경 콜백을 확인하는 `Basic Usage` 샘플을 추가했습니다.
+
 ## [0.3.0] - 2026-07-29
 
 - Inspector Injection 공통 계약, 서비스, Drawer 체인을 추가했습니다.
