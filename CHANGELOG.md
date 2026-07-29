@@ -1,5 +1,9 @@
 # 변경 기록
 
+## [0.3.2] - 2026-07-29
+
+- Runtime·Editor·Samples 어셈블리의 `rootNamespace`와 소스 파일 위치를 namespace에 맞게 정리했습니다.
+
 ## [0.3.1] - 2026-07-29
 
 - Inspector Injection과 값 변경 콜백을 확인하는 `Basic Usage` 샘플을 추가했습니다.

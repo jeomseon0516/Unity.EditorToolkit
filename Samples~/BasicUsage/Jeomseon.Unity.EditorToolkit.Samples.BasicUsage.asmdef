@@ -1,5 +1,6 @@
 {
   "name": "Jeomseon.Unity.EditorToolkit.Samples.BasicUsage",
+  "rootNamespace": "Jeomseon.Samples.EditorToolkit",
   "references": [
     "Jeomseon.Unity.Attributes",
     "Jeomseon.Unity.EditorToolkit"
