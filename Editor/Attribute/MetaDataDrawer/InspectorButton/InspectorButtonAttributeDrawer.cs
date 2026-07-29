@@ -10,8 +10,8 @@ namespace Jeomseon.Attribute.Editor
     using UnityEditorObjectEditor = UnityEditor.Editor;
 
     /// <summary>
-    /// InspectorButtonAttribute가 지정된 메서드의 버튼을 기본 인스펙터 본문 아래에 그립니다.
-    /// 자체 CustomEditor를 사용하는 타입에서는 OnInspectorGUI 마지막에 Draw를 직접 호출할 수 있습니다.
+    /// InspectorButtonAttribute가 지정된 메서드의 버튼을 인스펙터 본문 아래에 그립니다.
+    /// Inspector Injection 백엔드와 자체 CustomEditor의 명시적 호출이 이 진입점을 함께 사용합니다.
     /// </summary>
     public static class InspectorButtonGUI
     {
@@ -108,32 +108,19 @@ namespace Jeomseon.Attribute.Editor
         }
     }
 
-    /// <summary>
-    /// 다른 CustomEditor가 없는 MonoBehaviour에만 적용되는 공식 fallback Editor입니다.
-    /// Unity 내부 InspectorWindow 구조를 리플렉션하지 않으면서 본문 하단 위치를 보장합니다.
-    /// </summary>
-    [CustomEditor(typeof(MonoBehaviour), true, isFallback = true)]
-    [CanEditMultipleObjects]
-    internal sealed class InspectorButtonMonoBehaviourEditor : UnityEditorObjectEditor
+    internal sealed class InspectorButtonInjectedDrawer : IInspectorInjectedDrawer
     {
-        public override void OnInspectorGUI()
+        public void OnEnable(UnityEditorObjectEditor editor)
         {
-            DrawDefaultInspector();
-            InspectorButtonGUI.Draw(this);
         }
-    }
 
-    /// <summary>
-    /// 다른 CustomEditor가 없는 ScriptableObject에만 적용되는 공식 fallback Editor입니다.
-    /// </summary>
-    [CustomEditor(typeof(ScriptableObject), true, isFallback = true)]
-    [CanEditMultipleObjects]
-    internal sealed class InspectorButtonScriptableObjectEditor : UnityEditorObjectEditor
-    {
-        public override void OnInspectorGUI()
+        public void OnInspectorGUI(UnityEditorObjectEditor editor)
         {
-            DrawDefaultInspector();
-            InspectorButtonGUI.Draw(this);
+            InspectorButtonGUI.Draw(editor);
+        }
+
+        public void Dispose()
+        {
         }
     }
 }
