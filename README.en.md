@@ -1,3 +1,5 @@
 # Jeomseon Unity Editor Toolkit
 
-Inspector attributes, editor windows, and ScriptableObject authoring tools.
+Custom drawers for the lightweight Attributes package, editor windows, and ScriptableObject authoring tools.
+
+Localization-specific attributes and drawers belong to `com.jeomseon.unity.localization`.
