@@ -1,126 +1,139 @@
 #if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using UnityEngine;
 using UnityEditor;
+using UnityEngine;
 
 namespace Jeomseon.Attribute.Editor
 {
-    using Editor = UnityEditor.Editor;
+    using UnityEditorObjectEditor = UnityEditor.Editor;
 
     /// <summary>
-    /// InspectorButtonAttribute를 처리하는 전역 드로어입니다.
-    /// Unity 내부 InspectorWindow 구현을 리플렉션하지 않고
-    /// 오래전부터 제공되는 Editor.finishedDefaultHeaderGUI 공식 API만 사용합니다.
+    /// InspectorButtonAttribute가 지정된 메서드의 버튼을 기본 인스펙터 본문 아래에 그립니다.
+    /// 자체 CustomEditor를 사용하는 타입에서는 OnInspectorGUI 마지막에 Draw를 직접 호출할 수 있습니다.
     /// </summary>
-    [InitializeOnLoad]
-    internal static class InspectorButtonHeaderDrawer
+    public static class InspectorButtonGUI
     {
-        // 타입별로 버튼 메서드 캐시 (라벨, 메서드)
-        private static readonly Dictionary<Type, List<(string label, MethodInfo method)>> _cache
-            = new();
+        private static readonly Dictionary<Type, IReadOnlyList<ButtonMethod>> Cache = new();
 
-        static InspectorButtonHeaderDrawer()
+        public static void Draw(UnityEditorObjectEditor editor)
         {
-            // TODO(UX): 헤더가 아닌 본문 하단 배치가 필요해지면 CustomEditor를 강제하지 말고
-            // 공식 Editor 확장 지점을 제공하는 별도 opt-in 베이스 Editor 방식을 검토해야 합니다.
-            Editor.finishedDefaultHeaderGUI += OnFinishedDefaultHeaderGUI;
-        }
-
-        private static void OnFinishedDefaultHeaderGUI(Editor editor)
-        {
-            if (editor == null)
+            if (editor == null || editor.target == null)
                 return;
 
-            // 대상이 MonoBehaviour 또는 ScriptableObject일 때만 처리
-            var target = editor.target;
-            if (target is not MonoBehaviour && target is not ScriptableObject)
-                return;
-
-            Type targetType = target.GetType();
-
-            if (!_cache.TryGetValue(targetType, out var buttonMethods))
+            Type targetType = editor.target.GetType();
+            if (!Cache.TryGetValue(targetType, out IReadOnlyList<ButtonMethod> methods))
             {
-                buttonMethods = CollectButtonMethods(targetType);
-                _cache[targetType] = buttonMethods;
+                methods = CollectMethods(targetType);
+                Cache[targetType] = methods;
             }
 
-            if (buttonMethods == null || buttonMethods.Count == 0)
+            if (methods.Count == 0)
                 return;
 
-            // 기본 헤더와의 간격 살짝
-            GUILayout.Space(4f);
-
-            // 한 줄에 버튼들 배치
+            EditorGUILayout.Space();
             using (new EditorGUILayout.HorizontalScope())
             {
-                foreach (var (label, method) in buttonMethods)
+                foreach (ButtonMethod item in methods)
                 {
-                    if (GUILayout.Button(label))
-                    {
-                        InvokeForAllTargets(editor, method);
-                    }
+                    if (GUILayout.Button(item.Label))
+                        InvokeForAllTargets(editor, item.Method);
                 }
             }
         }
 
-        /// <summary>
-        /// 타입에서 InspectorButtonAttribute가 달린 메서드들을 수집.
-        /// </summary>
-        private static List<(string label, MethodInfo method)> CollectButtonMethods(Type type)
+        private static IReadOnlyList<ButtonMethod> CollectMethods(Type type)
         {
-            var list = new List<(string, MethodInfo)>();
-
-            const BindingFlags flags =
+            const BindingFlags Flags =
                 BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
-            var methods = type.GetMethods(flags);
-
-            foreach (var method in methods)
+            List<ButtonMethod> result = new();
+            foreach (MethodInfo method in type.GetMethods(Flags))
             {
-                var attr = method.GetCustomAttribute<InspectorButtonAttribute>();
-                if (attr == null)
+                InspectorButtonAttribute attribute = method.GetCustomAttribute<InspectorButtonAttribute>();
+                if (attribute == null)
                     continue;
 
-                // 파라미터 있는 메서드는 무시 (필요하면 확장 가능)
-                if (method.GetParameters().Length > 0)
+                if (method.GetParameters().Length != 0)
+                {
+                    Debug.LogWarning(
+                        $"[{nameof(InspectorButtonGUI)}] 매개변수가 있는 메서드는 지원하지 않습니다: " +
+                        $"{type.FullName}.{method.Name}");
                     continue;
+                }
 
-                string label = string.IsNullOrEmpty(attr.ButtonName)
-                    ? method.Name
-                    : attr.ButtonName;
+                string label = string.IsNullOrWhiteSpace(attribute.ButtonName)
+                    ? ObjectNames.NicifyVariableName(method.Name)
+                    : attribute.ButtonName;
 
-                list.Add((label, method));
+                result.Add(new ButtonMethod(label, method));
             }
 
-            return list;
+            return result;
         }
 
-        /// <summary>
-        /// 멀티 오브젝트 선택 시, 모든 target에 대해 메서드 호출.
-        /// </summary>
-        private static void InvokeForAllTargets(Editor editor, MethodInfo method)
+        private static void InvokeForAllTargets(UnityEditorObjectEditor editor, MethodInfo method)
         {
-            var targets = editor.targets;
-            foreach (var t in targets)
+            foreach (UnityEngine.Object target in editor.targets)
             {
                 try
                 {
-                    method.Invoke(t, null);
-
-                    // 변경사항 반영이 필요하면 MarkDirty
-                    if (t is UnityEngine.Object obj)
-                    {
-                        EditorUtility.SetDirty(obj);
-                    }
+                    Undo.RecordObject(target, $"Invoke {method.Name}");
+                    method.Invoke(target, null);
+                    EditorUtility.SetDirty(target);
+                    PrefabUtility.RecordPrefabInstancePropertyModifications(target);
                 }
-                catch (Exception ex)
+                catch (TargetInvocationException exception)
                 {
-                    Debug.LogException(ex);
+                    Debug.LogException(exception.InnerException ?? exception, target);
+                }
+                catch (Exception exception)
+                {
+                    Debug.LogException(exception, target);
                 }
             }
+        }
+
+        private readonly struct ButtonMethod
+        {
+            public ButtonMethod(string label, MethodInfo method)
+            {
+                Label = label;
+                Method = method;
+            }
+
+            public string Label { get; }
+            public MethodInfo Method { get; }
+        }
+    }
+
+    /// <summary>
+    /// 다른 CustomEditor가 없는 MonoBehaviour에만 적용되는 공식 fallback Editor입니다.
+    /// Unity 내부 InspectorWindow 구조를 리플렉션하지 않으면서 본문 하단 위치를 보장합니다.
+    /// </summary>
+    [CustomEditor(typeof(MonoBehaviour), true, isFallback = true)]
+    [CanEditMultipleObjects]
+    internal sealed class InspectorButtonMonoBehaviourEditor : UnityEditorObjectEditor
+    {
+        public override void OnInspectorGUI()
+        {
+            DrawDefaultInspector();
+            InspectorButtonGUI.Draw(this);
+        }
+    }
+
+    /// <summary>
+    /// 다른 CustomEditor가 없는 ScriptableObject에만 적용되는 공식 fallback Editor입니다.
+    /// </summary>
+    [CustomEditor(typeof(ScriptableObject), true, isFallback = true)]
+    [CanEditMultipleObjects]
+    internal sealed class InspectorButtonScriptableObjectEditor : UnityEditorObjectEditor
+    {
+        public override void OnInspectorGUI()
+        {
+            DrawDefaultInspector();
+            InspectorButtonGUI.Draw(this);
         }
     }
 }

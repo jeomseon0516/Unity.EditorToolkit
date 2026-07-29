@@ -1,11 +1,11 @@
 {
   "name": "com.jeomseon.unity.editor-toolkit",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "displayName": "Jeomseon Unity Editor Toolkit",
   "description": "Inspector attributes, editor windows, and ScriptableObject authoring tools.",
   "unity": "2022.3",
   "dependencies": {
-    "com.jeomseon.unity.attributes": "0.1.0",
+    "com.jeomseon.unity.attributes": "0.2.0",
     "com.jeomseon.unity.core": "0.1.0",
     "com.jeomseon.unity.pooling": "0.1.0",
     "com.unity.2d.sprite": "1.0.0",

@@ -7,8 +7,13 @@
 OpenUPM 등록 전에는 Package Manager의 **Add package from git URL**에서 다음 주소를 사용합니다.
 
 ```text
-https://github.com/jeomseon0516/Unity.EditorToolkit.git#v0.2.0
+https://github.com/jeomseon0516/Unity.EditorToolkit.git#v0.2.1
 ```
+
+`OnChangedValueForMethodAttribute`는 특정 CustomEditor를 대체하지 않고 전역 Undo 변경 알림을
+사용합니다. 다른 CustomEditor에서도 `SerializedObject`/`SerializedProperty` 또는
+`Undo.RecordObject`를 통해 변경을 기록하면 콜백이 실행됩니다. Undo를 기록하지 않고 필드에 직접
+대입한 변경은 Unity 공식 API로 안정적으로 관찰할 수 없으므로 지원하지 않습니다.
 
 ## 리팩토링 방침
 

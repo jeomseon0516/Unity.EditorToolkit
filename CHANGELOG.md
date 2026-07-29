@@ -1,10 +1,16 @@
 # 변경 기록
 
+## [0.2.1] - 2026-07-29
+
+- Inspector 버튼을 헤더가 아닌 기본 인스펙터 본문 하단에 렌더링하도록 fallback CustomEditor 방식으로 변경했습니다.
+- 자체 CustomEditor에서 동일한 위치 정책을 적용할 수 있도록 `InspectorButtonGUI.Draw` 진입점을 공개했습니다.
+- `OnChangedValueForMethodAttribute` 처리를 인스펙터 Repaint 폴링에서 `Undo.postprocessModifications` 기반으로 변경했습니다.
+
 ## [0.2.0] - 2026-07-29
 
 - 범용 Attribute 선언을 Jeomseon Unity Attributes 패키지로 분리했습니다.
 - LocalizedString Attribute와 Drawer를 Localization 패키지로 이동했습니다.
-- Unity 내부 InspectorWindow 리플렉션을 제거하고 공식 `Editor.finishedDefaultHeaderGUI` API를 사용하도록 통합했습니다.
+- Unity 내부 InspectorWindow 리플렉션을 제거했습니다.
 
 ## [Unreleased]
 
