@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEditor.UIElements;
-using Jeomseon.Extensions;
+using Jeomseon.Collections;
 
 namespace Jeomseon.Editor.Window
 {

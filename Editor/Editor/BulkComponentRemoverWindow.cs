@@ -2,11 +2,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
+using Jeomseon.Collections;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEditorInternal;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Bulk Component Remover (통합판)
@@ -15,7 +16,7 @@ using UnityEngine;
 /// - Missing Script 제거 전용 모드
 /// - 레이어/태그 필터, Include Inactive, Search Children
 /// - 미리보기 및 Undo 지원
-/// 메뉴: Window > Tools > Bulk Component Remover
+/// 메뉴: Jeomseon > Tool > Bulk Component Remover
 /// </summary>
 namespace Jeomseon.Editor
 {
@@ -53,7 +54,7 @@ namespace Jeomseon.Editor
         // ----------------------------------------------------------------------------
         // 메뉴
         // ----------------------------------------------------------------------------
-        [MenuItem("Jeomseon/Tools/Bulk Component Remover")]
+        [MenuItem("Jeomseon/Tool/Bulk Component Remover")]
         public static void Open()
         {
             var wnd = GetWindow<BulkComponentRemoverWindow>(true, "Bulk Component Remover");
@@ -69,7 +70,14 @@ namespace Jeomseon.Editor
             // 모드
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Mode", EditorStyles.boldLabel);
-            _missingOnly = EditorGUILayout.ToggleLeft(new GUIContent("Missing Script Cleanup Only", "Missing Script만 제거합니다 (타입 지정 무시)"), _missingOnly);
+            bool missingOnly = EditorGUILayout.ToggleLeft(
+                new GUIContent("Missing Script Cleanup Only", "Missing Script만 제거합니다 (타입 지정 무시)"),
+                _missingOnly);
+            if (missingOnly != _missingOnly)
+            {
+                _missingOnly = missingOnly;
+                InvalidatePreview();
+            }
 
             // 대상 컴포넌트 지정
             EditorGUILayout.Space();
@@ -77,25 +85,27 @@ namespace Jeomseon.Editor
             {
                 EditorGUILayout.LabelField("Target Component", EditorStyles.boldLabel);
 
-                //// 1) 컴포넌트 타입 전용 브라우저 버튼
-                //using (new EditorGUILayout.HorizontalScope())
-                //{
-                //    if (GUILayout.Button(new GUIContent("Browse Component Types...", "컴포넌트 타입 선택 팝업"), GUILayout.Width(220)))
-                //    {
-                //        var pickedType = ComponentTypePicker.ShowPicker();
-                //        if (pickedType != null)
-                //        {
-                //            _resolvedType = pickedType;          // 타입 우선 사용
-                //            _typeName = pickedType.FullName;     // 텍스트 입력에도 반영
-                //            _monoScript = null;                  // MonoScript 선택은 비움
-                //            _monoIsInvalidPick = false;
-                //        }
-                //    }
-                //    if (_resolvedType != null)
-                //    {
-                //        EditorGUILayout.LabelField(new GUIContent($"Selected: {_resolvedType.FullName}"));
-                //    }
-                //}
+                // 1) 컴포넌트 타입 전용 브라우저 버튼
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    if (GUILayout.Button(
+                            new GUIContent("Browse Component Types...", "컴포넌트 타입 선택 팝업"),
+                            GUILayout.Width(220)))
+                    {
+                        Type pickedType = ComponentTypePicker.ShowPicker();
+                        if (pickedType != null)
+                        {
+                            _resolvedType = pickedType;
+                            _typeName = pickedType.FullName ?? pickedType.Name;
+                            _monoScript = null;
+                            _monoIsInvalidPick = false;
+                            InvalidatePreview();
+                        }
+                    }
+
+                    if (_resolvedType != null)
+                        EditorGUILayout.LabelField(new GUIContent($"Selected: {_resolvedType.FullName}"));
+                }
 
                 // 2) MonoScript 드래그 (컴포넌트만 허용)
                 EditorGUI.BeginChangeCheck();
@@ -106,6 +116,7 @@ namespace Jeomseon.Editor
                     if (picked == null)
                     {
                         _monoScript = null;
+                        _resolvedType = null;
                     }
                     else
                     {
@@ -121,6 +132,8 @@ namespace Jeomseon.Editor
                             _monoIsInvalidPick = true;
                         }
                     }
+
+                    InvalidatePreview();
                 }
                 if (_monoIsInvalidPick)
                     EditorGUILayout.HelpBox("선택한 MonoScript가 Component 타입이 아닙니다.", MessageType.Warning);
@@ -128,10 +141,20 @@ namespace Jeomseon.Editor
                 // 3) 타입명 직접 입력
                 using (new EditorGUILayout.HorizontalScope())
                 {
+                    EditorGUI.BeginChangeCheck();
                     _typeName = EditorGUILayout.TextField(new GUIContent("Type Name", "예: BoxCollider, UnityEngine.BoxCollider, Namespace.MyComponent"), _typeName);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        _resolvedType = null;
+                        _monoScript = null;
+                        _monoIsInvalidPick = false;
+                        InvalidatePreview();
+                    }
+
                     if (GUILayout.Button("Find Type", GUILayout.Width(90)))
                     {
                         _resolvedType = ResolveType();
+                        InvalidatePreview();
                     }
                 }
             }
@@ -139,17 +162,55 @@ namespace Jeomseon.Editor
             // 범위/필터
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Scope & Filters", EditorStyles.boldLabel);
-            _includeInactive = EditorGUILayout.Toggle(new GUIContent("Include Inactive", "비활성 오브젝트 포함"), _includeInactive);
-            _searchInSelectionChildren = EditorGUILayout.Toggle(new GUIContent("Search Children", "선택 오브젝트의 자식 포함"), _searchInSelectionChildren);
+            bool includeInactive = EditorGUILayout.Toggle(
+                new GUIContent("Include Inactive", "비활성 오브젝트 포함"),
+                _includeInactive);
+            if (includeInactive != _includeInactive)
+            {
+                _includeInactive = includeInactive;
+                InvalidatePreview();
+            }
 
-            _filterByLayer = EditorGUILayout.Toggle(new GUIContent("Filter by Layer", "특정 레이어만 대상"), _filterByLayer);
+            bool searchInSelectionChildren = EditorGUILayout.Toggle(
+                new GUIContent("Search Children", "선택 오브젝트의 자식 포함"),
+                _searchInSelectionChildren);
+            if (searchInSelectionChildren != _searchInSelectionChildren)
+            {
+                _searchInSelectionChildren = searchInSelectionChildren;
+                InvalidatePreview();
+            }
+
+            bool filterByLayer = EditorGUILayout.Toggle(
+                new GUIContent("Filter by Layer", "특정 레이어만 대상"),
+                _filterByLayer);
+            if (filterByLayer != _filterByLayer)
+            {
+                _filterByLayer = filterByLayer;
+                InvalidatePreview();
+            }
+
             if (_filterByLayer)
             {
                 // 다중 선택 지원 LayerMask UI
-                _layerMask = EditorGUILayoutLayerMask.LayerFieldMask(new GUIContent("Layer Mask"), _layerMask);
+                LayerMask layerMask = EditorGUILayoutLayerMask.LayerFieldMask(
+                    new GUIContent("Layer Mask"),
+                    _layerMask);
+                if (layerMask.value != _layerMask.value)
+                {
+                    _layerMask = layerMask;
+                    InvalidatePreview();
+                }
             }
 
-            _filterByTag = EditorGUILayout.Toggle(new GUIContent("Filter by Tag", "특정 태그만 대상"), _filterByTag);
+            bool filterByTag = EditorGUILayout.Toggle(
+                new GUIContent("Filter by Tag", "특정 태그만 대상"),
+                _filterByTag);
+            if (filterByTag != _filterByTag)
+            {
+                _filterByTag = filterByTag;
+                InvalidatePreview();
+            }
+
             if (_filterByTag)
             {
                 var tags = InternalEditorUtility.tags;
@@ -159,7 +220,15 @@ namespace Jeomseon.Editor
                 }
                 else
                 {
-                    _tagIndex = EditorGUILayout.Popup("Tag", Mathf.Clamp(_tagIndex, 0, tags.Length - 1), tags);
+                    int tagIndex = EditorGUILayout.Popup(
+                        "Tag",
+                        Mathf.Clamp(_tagIndex, 0, tags.Length - 1),
+                        tags);
+                    if (tagIndex != _tagIndex)
+                    {
+                        _tagIndex = tagIndex;
+                        InvalidatePreview();
+                    }
                 }
             }
 
@@ -223,23 +292,26 @@ namespace Jeomseon.Editor
         // ----------------------------------------------------------------------------
         private bool CanSearch()
         {
-            if (_missingOnly) return true;
+            if (_missingOnly)
+                return true;
 
-            if (_resolvedType != null && typeof(Component).IsAssignableFrom(_resolvedType)) return true;
+            if (_resolvedType != null &&
+                typeof(Component).IsAssignableFrom(_resolvedType))
+            {
+                return true;
+            }
 
             if (_monoScript != null)
             {
-                var t = _monoScript.GetClass();
-                if (t != null && typeof(Component).IsAssignableFrom(t)) return true;
+                Type type = _monoScript.GetClass();
+                if (type != null &&
+                    typeof(Component).IsAssignableFrom(type))
+                {
+                    return true;
+                }
             }
 
-            if (!string.IsNullOrWhiteSpace(_typeName))
-            {
-                var t = ResolveType();
-                if (t != null) return true;
-            }
-
-            return false;
+            return !string.IsNullOrWhiteSpace(_typeName);
         }
 
         private Type ResolveType()
@@ -251,42 +323,69 @@ namespace Jeomseon.Editor
             // 2) MonoScript가 지정된 경우 (Component만 허용 검증됨)
             if (_monoScript != null)
             {
-                var t = _monoScript.GetClass();
-                if (t != null && typeof(Component).IsAssignableFrom(t)) return t;
+                var scriptType = _monoScript.GetClass();
+                if (scriptType != null && typeof(Component).IsAssignableFrom(scriptType)) return scriptType;
             }
 
             // 3) 문자열로 입력된 타입명 해석
             var name = _typeName?.Trim();
             if (string.IsNullOrEmpty(name)) return null;
 
+            List<Type> componentTypes = EditorTypeDiscovery
+                .GetConcreteTypesDerivedFrom<Component>()
+                .ToList();
+
             // FQN 정확 매치
-            var exact = AppDomain.CurrentDomain.GetAssemblies()
-                .SelectMany(a => SafeGetTypes(a))
-                .FirstOrDefault(t => typeof(Component).IsAssignableFrom(t) && t.FullName == name);
+            var exact = componentTypes.FirstOrDefault(type =>
+                string.Equals(type.FullName, name, StringComparison.Ordinal));
             if (exact != null) return exact;
 
             // 간단 이름 매치/부분 매치 후보
-            var candidates = AppDomain.CurrentDomain.GetAssemblies()
-                .SelectMany(a => SafeGetTypes(a))
-                .Where(t => typeof(Component).IsAssignableFrom(t) && (t.Name == name || t.Name.IndexOf(name, StringComparison.OrdinalIgnoreCase) >= 0))
-                .Distinct()
+            List<Type> candidates = componentTypes
+                .Where(type =>
+                    string.Equals(type.Name, name, StringComparison.Ordinal) ||
+                    type.Name.IndexOf(name, StringComparison.OrdinalIgnoreCase) >= 0)
+                .OrderBy(type => type.FullName)
                 .ToList();
 
-            if (candidates.Count == 1) return candidates[0];
-            if (candidates.Count > 1)
+            return candidates.Count switch
             {
-                var options = candidates.Select(t => t.FullName).ToArray();
-                var choice = PopupListWindow.Show("Select Component Type", options);
-                if (choice >= 0 && choice < candidates.Count) return candidates[choice];
-            }
+                0 => null,
+                1 => candidates[0],
+                _ => SelectCandidate()
+            };
 
-            return null;
+            Type SelectCandidate()
+            {
+                string[] options = candidates
+                    .Select(type => type.FullName ?? type.Name)
+                    .ToArray();
+
+                int choice = PopupListWindow.Show(
+                    "Select Component Type",
+                    options);
+
+                return choice >= 0 && choice < candidates.Count
+                    ? candidates[choice]
+                    : null;
+            }
         }
 
         private void Preview()
         {
             if (!_missingOnly)
+            {
                 _resolvedType = ResolveType();
+                if (_resolvedType == null)
+                {
+                    _matches.Clear();
+                    EditorUtility.DisplayDialog(
+                        "Type Not Found",
+                        "입력한 Component 타입을 찾을 수 없습니다.",
+                        "OK");
+                    return;
+                }
+            }
 
             _matches.Clear();
 
@@ -297,33 +396,47 @@ namespace Jeomseon.Editor
                 return;
             }
 
-            foreach (var root in selection)
+            HashSet<GameObject> targets = new();
+            foreach (GameObject root in selection)
             {
-                if (root == null) continue;
-                foreach (var go in CollectTargets(root, _searchInSelectionChildren, _includeInactive))
-                {
-                    if (!PassesFilters(go)) continue;
+                if (root == null)
+                    continue;
 
-                    if (_missingOnly)
+                foreach (GameObject target in CollectTargets(
+                             root,
+                             _searchInSelectionChildren,
+                             _includeInactive))
+                {
+                    targets.Add(target);
+                }
+            }
+
+            foreach (GameObject go in targets)
+            {
+                if (!PassesFilters(go))
+                    continue;
+
+                if (_missingOnly)
+                {
+                    Component[] components = go.GetComponents<Component>();
+                    foreach (Component component in components)
                     {
-                        var comps = go.GetComponents<Component>();
-                        for (int i = 0; i < comps.Length; i++)
+                        if (component == null)
                         {
-                            if (comps[i] == null)
-                            {
-                                _matches.Add(new Match { go = go, component = null, isMissing = true });
-                            }
+                            _matches.Add(new Match
+                                { go = go, component = null, isMissing = true });
                         }
                     }
-                    else
+                }
+                else
+                {
+                    Component[] components = go.GetComponents(_resolvedType);
+                    foreach (Component component in components)
                     {
-                        if (_resolvedType == null) continue;
-                        var comps = go.GetComponents(_resolvedType);
-                        foreach (var c in comps)
-                        {
-                            if (c == null) continue;
-                            _matches.Add(new Match { go = go, component = c, isMissing = false });
-                        }
+                        if (component == null) continue;
+
+                        _matches.Add(new Match
+                            { go = go, component = component, isMissing = false });
                     }
                 }
             }
@@ -363,11 +476,20 @@ namespace Jeomseon.Editor
 
             Undo.IncrementCurrentGroup();
             int group = Undo.GetCurrentGroup();
+            Undo.SetCurrentGroupName(title);
+
+            HashSet<Scene> affectedScenes = _matches
+                .Where(match => match?.go != null && match.go.scene.IsValid())
+                .Select(match => match.go.scene)
+                .ToHashSet();
 
             int removed = 0;
             if (_missingOnly)
             {
-                var perGo = _matches.Select(m => m.go).Distinct();
+                var perGo = _matches
+                    .Select(m => m.go)
+                    .Distinct();
+                
                 foreach (var go in perGo)
                 {
                     if (go == null) continue;
@@ -381,9 +503,8 @@ namespace Jeomseon.Editor
             }
             else
             {
-                foreach (var m in _matches)
+                foreach (var m in _matches.Where(m => m != null && m.component != null))
                 {
-                    if (m == null || m.component == null) continue;
                     Undo.DestroyObjectImmediate(m.component);
                     removed++;
                 }
@@ -392,7 +513,11 @@ namespace Jeomseon.Editor
             Undo.CollapseUndoOperations(group);
 
             if (!Application.isPlaying)
-                EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
+            {
+                affectedScenes
+                    .Where(scene => scene.isLoaded)
+                    .ForEach(scene => EditorSceneManager.MarkSceneDirty(scene));
+            }
 
             EditorUtility.DisplayDialog("Done", $"Removed {removed} component(s).", "OK");
             _matches.Clear();
@@ -414,11 +539,15 @@ namespace Jeomseon.Editor
             }
         }
 
-        private static IEnumerable<Type> SafeGetTypes(Assembly a)
+        private void OnSelectionChange()
         {
-            try { return a.GetTypes(); }
-            catch (ReflectionTypeLoadException ex) { return ex.Types.Where(t => t != null); }
-            catch { return Array.Empty<Type>(); }
+            InvalidatePreview();
+            Repaint();
+        }
+
+        private void InvalidatePreview()
+        {
+            _matches.Clear();
         }
 
         // 컴포넌트 타입 전용 선택 팝업 (TypeCache 사용)
@@ -426,8 +555,9 @@ namespace Jeomseon.Editor
         {
             public static Type ShowPicker()
             {
-                var all = UnityEditor.TypeCache.GetTypesDerivedFrom<Component>()
-                    .Where(t => !t.IsAbstract && t.IsPublic)
+                List<Type> all = EditorTypeDiscovery
+                    .GetConcreteTypesDerivedFrom<Component>()
+                    .Where(type => type.IsPublic || type.IsNestedPublic)
                     .OrderBy(t => t.Namespace)
                     .ThenBy(t => t.Name)
                     .ToList();
@@ -512,8 +642,8 @@ namespace Jeomseon.Editor
             int result = 0;
             for (int i = 0; i < indices.Length; i++)
             {
-                if ((newMask & (1 << i)) != 0)
-                    result |= 1 << indices[i];
+                if ((newMask & (1 << i)) == 0) continue;
+                result |= 1 << indices[i];
             }
             selected.value = result;
             return selected;

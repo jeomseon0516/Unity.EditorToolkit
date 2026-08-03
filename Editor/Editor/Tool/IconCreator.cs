@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.U2D.Sprites;
 using TMPro;
-using Jeomseon.Helper;
+using Jeomseon.Imaging;
 
 namespace Jeomseon.Editor.Tool
 {
@@ -25,6 +25,10 @@ namespace Jeomseon.Editor.Tool
         private ReorderableList _reorderableIconSources;
         private Texture2D _iconTexture = null;
 
+        /* TODO(P2-03, editor-settings): 고정된 atlas 크기, 분할 수, importer와 TMP 생성 옵션을
+         * ScriptableObject preset 또는 EditorPrefs로 저장하고 프로젝트별 기본값을 선택하게 합니다.
+         * preset Inspector에서 출력 크기·sprite 수 불일치와 읽기 불가능 texture를 사전 검증합니다.
+         */
         private void OnEnable()
         {
             _reorderableIconSources = new(
@@ -123,7 +127,8 @@ namespace Jeomseon.Editor.Tool
                             currentX += _size;
                         }
 
-                        // .. TODO : 수정 필요
+                        /* TODO(P2-02, correctness): 아이콘 픽셀 경계 처리와 알파 합성 결과를 검증하고 수정합니다.
+                         */
                         SpriteDataProviderFactories factory = new();
                         factory.Init();
                         ISpriteEditorDataProvider dataProvider = factory.GetSpriteEditorDataProviderFromObject(importer);
@@ -205,7 +210,7 @@ namespace Jeomseon.Editor.Tool
                         RenderTexture.active = null;
                         renderTexture.Release();
 
-                        return TextureHelper.ResizeColorPixel(
+                        return TexturePixelResampler.ResizeToFit(
                             readableTexture.GetPixels(0, 0, width, height),
                             width,
                             height,

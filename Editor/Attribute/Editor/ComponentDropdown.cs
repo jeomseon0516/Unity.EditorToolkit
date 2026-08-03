@@ -3,7 +3,7 @@ using System;
 using System.Linq;
 using System.Text;
 using System.Collections.Generic;
-using Jeomseon.Scope;
+using Jeomseon.Text;
 using UnityEngine;
 using UnityEditor;
 using UnityEditor.IMGUI.Controls;
@@ -341,19 +341,17 @@ namespace Jeomseon.Attribute.Editor
 
         private string buildString(GameObject go)
         {
-            using StringBuilderPoolScope scope = new StringBuilderPoolScope();
-            StringBuilder builder = scope.Get();
+            using (StringBuilderPool.Shared.Get(out StringBuilder builder))
+            {
+                builder.Append(go.name);
+                builder.Append(" (");
+                builder.Append(_filterType == _defaultType || go.TryGetComponent(_filterType, out Component _)
+                    ? _filterType.Name
+                    : _defaultType.Name);
+                builder.Append(")");
 
-            builder.Append(go.name);
-            builder.Append(" (");
-            builder.Append(_filterType == _defaultType || go.TryGetComponent(_filterType, out Component _)
-                ? _filterType.Name
-                : _defaultType.Name);
-            builder.Append(")");
-
-            string name = builder.ToString();
-            builder.Clear();
-            return name;
+                return builder.ToString();
+            }
         }
     }
 }

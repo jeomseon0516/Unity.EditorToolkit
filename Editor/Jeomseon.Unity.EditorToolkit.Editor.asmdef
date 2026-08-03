@@ -5,7 +5,6 @@
     "Jeomseon.Unity.EditorToolkit",
     "Jeomseon.Unity.Attributes",
     "Jeomseon.Unity.Core",
-    "Jeomseon.Unity.Pooling",
     "UnityEngine.UI",
     "Unity.TextMeshPro",
     "Unity.2D.Sprite.Editor",

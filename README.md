@@ -14,7 +14,7 @@ https://github.com/jeomseon0516/Unity.EditorToolkit.git#v0.3.1
 
 `InspectorButtonAttribute`는 기존 CustomEditor가 있어도 본문 하단에 버튼을 추가할 수 있도록
 Inspector Injection을 사용합니다. 공통 생명주기와 Drawer 체인은 인터페이스로 관리하고,
-Unity 2022.3~2023 계열과 Unity 6 구현은 전처리기와 별도 백엔드로 분리했습니다.
+Unity 6000.3.15f1 이상을 지원하며 Unity 6 Inspector 백엔드만 사용합니다.
 
 이 기능은 Unity가 공개하지 않은 InspectorWindow/InspectorElement 내부 구조를 제한적으로
 조회하므로 Unity 패치 버전에 따라 동작하지 않을 수 있습니다. 필요한 내부 멤버를 찾지 못하면

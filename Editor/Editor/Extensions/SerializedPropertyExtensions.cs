@@ -13,7 +13,9 @@ namespace Jeomseon.Editor.Extensions
         public static Type GetPropertyType(this SerializedProperty prop)
         {
             Object targetObject = prop?.serializedObject.targetObject;
-            return !targetObject ? null : EditorReflectionHelper.GetPropertyType(targetObject, prop.propertyPath);
+            return !targetObject
+                ? null
+                : SerializedPropertyReflection.GetPropertyType(targetObject, prop.propertyPath);
         }
 
         public static Type GetParentType(this SerializedProperty prop)
@@ -67,7 +69,7 @@ namespace Jeomseon.Editor.Extensions
 
         public static bool IsNestedAttribute<TAttributeType>(this SerializedProperty prop) where TAttributeType : Attribute
         {
-            return EditorReflectionHelper.IsNestedAttribute<TAttributeType>(
+            return SerializedPropertyReflection.HasAttribute<TAttributeType>(
                 prop.serializedObject.targetObject,
                 prop.propertyPath);
         }

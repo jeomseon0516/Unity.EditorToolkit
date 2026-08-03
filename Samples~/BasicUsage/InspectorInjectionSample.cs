@@ -7,6 +7,7 @@ namespace Jeomseon.Samples.EditorToolkit
     {
         [SerializeField] private string _message = "Inspector Injection";
         [ReadOnly, SerializeField] private int _changeCount;
+        [ReadOnly, SerializeField] private int _buttonClickCount;
 
         [OnChangedValueForMethod(nameof(_message))]
         private void OnMessageChanged()
@@ -17,7 +18,7 @@ namespace Jeomseon.Samples.EditorToolkit
         [InspectorButton("Injection 버튼 실행")]
         private void InvokeFromInspector()
         {
-            Debug.Log(_message, this);
+            Debug.Log($"{_message} - 버튼 클릭 횟수: {++_buttonClickCount}", this);
         }
     }
 }

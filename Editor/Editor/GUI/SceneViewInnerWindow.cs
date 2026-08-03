@@ -1,7 +1,6 @@
 #if UNITY_EDITOR
 using System;
-using Jeomseon.Extensions;
-using Jeomseon.Helper;
+using Jeomseon.UIElements;
 using UnityEngine;
 using UnityEditor;
 using Event = UnityEngine.Event;
@@ -30,7 +29,7 @@ namespace Jeomseon.Editor.GUI
         {
             if (EditorPrefs.HasKey(_windowOptionKey))
             {
-                _windowRect = JsonUtility.FromJson<SerializedRect>(EditorPrefs.GetString(_windowOptionKey));
+                _windowRect = JsonUtility.FromJson<Rect>(EditorPrefs.GetString(_windowOptionKey));
             }
 
             IsUse = false;
@@ -38,7 +37,7 @@ namespace Jeomseon.Editor.GUI
 
         public void OnDisable()
         {
-            EditorPrefs.SetString(_windowOptionKey, JsonUtility.ToJson(new SerializedRect(_windowRect)));
+            EditorPrefs.SetString(_windowOptionKey, JsonUtility.ToJson(_windowRect));
         }
 
         public void OnSceneGUI(Action<int> call)

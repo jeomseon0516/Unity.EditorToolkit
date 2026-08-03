@@ -1,7 +1,7 @@
 #if UNITY_EDITOR
 using UnityEngine;
 using UnityEngine.UIElements;
-using Jeomseon.Extensions;
+using Jeomseon.Mathematics;
 
 namespace Jeomseon.Editor.Extensions
 {

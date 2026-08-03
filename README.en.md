@@ -2,8 +2,9 @@
 
 `InspectorButtonAttribute` uses a versioned Inspector Injection backend so it can
 append buttons after the inspector body even when another custom editor is active.
-The Unity 2022.3–2023 and Unity 6 implementations are compiled separately. Because
-this feature reads non-public InspectorWindow/InspectorElement structure, a Unity
+Unity 6000.3.15f1 or newer is supported through the Unity 6 Inspector backend.
+Because this feature reads non-public
+InspectorWindow/InspectorElement structure, a Unity
 patch can break the injection. Failure is isolated to this feature and
 `InspectorButtonGUI.Draw(this)` remains available as an explicit stable fallback.
 

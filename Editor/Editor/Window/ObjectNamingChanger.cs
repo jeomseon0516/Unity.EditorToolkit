@@ -5,7 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
-using Jeomseon.Extensions;
+using Jeomseon.Collections;
 
 namespace Jeomseon.Editor.Window
 {
