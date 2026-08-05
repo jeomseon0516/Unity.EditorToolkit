@@ -11,7 +11,7 @@
 3. **P1-01 — 내부 Inspector 접근 격리**
    - 버전별 백엔드만 내부 API를 사용하고 실패 시 Injection 기능만 비활성화합니다.
 4. **P1-02 — Unity 버전 테스트 매트릭스**
-   - 최소 지원 버전인 Unity 6000.3.15f1 이상의 자동 검증 환경을 구성합니다.
+   - 최소 지원 버전인 Unity 6000.5.7f1 이상의 자동 검증 환경을 구성합니다.
 5. **P2-01 — IMGUI 기능의 UI Toolkit 이전**
    - PropertyDrawer, InspectorElement, SettingsProvider로 대체 가능한 순서대로 이전합니다.
 6. **P2-02 — IconCreator 정확성**
