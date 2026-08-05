@@ -2,11 +2,10 @@
   "name": "com.jeomseon.unity.editor-toolkit",
   "version": "0.3.2",
   "displayName": "Jeomseon Unity Editor Toolkit",
-  "description": "Inspector attributes, editor windows, and ScriptableObject authoring tools.",
+  "description": "Shared editor APIs, editor windows, and ScriptableObject authoring tools.",
   "unity": "6000.3",
   "unityRelease": "15f1",
   "dependencies": {
-    "com.jeomseon.unity.attributes": "0.2.0",
     "com.jeomseon.unity.core": "0.1.0",
     "com.unity.2d.sprite": "1.0.0",
     "com.unity.ugui": "1.0.0"
@@ -24,12 +23,5 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/jeomseon0516/Unity.EditorToolkit.git"
-  },
-  "samples": [
-    {
-      "displayName": "Basic Usage",
-      "description": "패키지 핵심 API를 확인하는 최소 사용 예제입니다.",
-      "path": "Samples~/BasicUsage"
-    }
-  ]
+  }
 }

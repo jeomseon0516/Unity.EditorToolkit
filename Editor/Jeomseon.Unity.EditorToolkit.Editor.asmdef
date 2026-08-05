@@ -3,7 +3,6 @@
   "rootNamespace": "Jeomseon",
   "references": [
     "Jeomseon.Unity.EditorToolkit",
-    "Jeomseon.Unity.Attributes",
     "Jeomseon.Unity.Core",
     "UnityEngine.UI",
     "Unity.TextMeshPro",
