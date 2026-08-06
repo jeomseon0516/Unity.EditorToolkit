@@ -13,78 +13,22 @@ namespace Jeomseon.Editor
         /* TODO(P2-01, api): UI Toolkit의 PropertyDrawer, InspectorElement 및 SettingsProvider로
          * 대체 가능한 IMGUI 편집기 기능을 단계적으로 이전합니다.
          */
-        public static void ActionHorizontal(Action action, params GUILayoutOption[] options)
-        {
-            GUILayout.BeginHorizontal(options);
-            action.Invoke();
-            GUILayout.EndHorizontal();
-        }
-
-        public static void ActionHorizontal(Action action, GUIStyle guiStyle, params GUILayoutOption[] options)
-        {
-            GUILayout.BeginHorizontal(guiStyle, options);
-            action.Invoke();
-            GUILayout.EndHorizontal();
-        }
-
-        public static void ActionEditorHorizontal(Action action, GUIStyle guiStyle, params GUILayoutOption[] options)
-        {
-            EditorGUILayout.BeginHorizontal(guiStyle, options);
-            action.Invoke();
-            EditorGUILayout.EndHorizontal();
-        }
-
-        public static void ActionEditorHorizontal(Action action, params GUILayoutOption[] options)
-        {
-            EditorGUILayout.BeginHorizontal(options);
-            action.Invoke();
-            EditorGUILayout.EndHorizontal();
-        }
-
-        public static void ActionEditorVertical(Action action, params GUILayoutOption[] options)
-        {
-            EditorGUILayout.BeginVertical(options);
-            action.Invoke();
-            EditorGUILayout.EndVertical();
-        }
-
-        public static void ActionEditorVertical(Action action, GUIStyle guiStyle, params GUILayoutOption[] options)
-        {
-            EditorGUILayout.BeginVertical(guiStyle, options);
-            action.Invoke();
-            EditorGUILayout.EndVertical();
-        }
-
-        public static void ActionVertical(Action action, params GUILayoutOption[] options)
-        {
-            GUILayout.BeginVertical(options);
-            action.Invoke();
-            GUILayout.EndVertical();
-        }
-
-        public static void ActionVertical(Action action, GUIStyle guiStyle, params GUILayoutOption[] options)
-        {
-            GUILayout.BeginVertical(guiStyle, options);
-            action.Invoke();
-            GUILayout.EndVertical();
-        }
 
         public static void ActionEditorVerticalBox(GUIStyle guiStyle, ref Vector2 scrollPosition, Action action, params GUILayoutOption[] options)
         {
-            EditorGUILayout.BeginVertical(guiStyle, options);
-            scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
+            using (new EditorGUILayout.VerticalScope(guiStyle, options));
+            using var scrollScope = new EditorGUILayout.ScrollViewScope(scrollPosition);
+            scrollPosition = scrollScope.scrollPosition;
             action.Invoke();
             EditorGUILayout.EndScrollView();
-            EditorGUILayout.EndVertical();
         }
 
         public static void ActionVerticalBox(GUIStyle guiStyle, ref Vector2 scrollPosition, Action action, params GUILayoutOption[] options)
         {
-            GUILayout.BeginVertical(guiStyle, options);
-            scrollPosition = GUILayout.BeginScrollView(scrollPosition);
+            using (new EditorGUILayout.VerticalScope(guiStyle, options));
+            using var scrollScope = new GUILayout.ScrollViewScope(scrollPosition);
+            scrollPosition = scrollScope.scrollPosition;
             action.Invoke();
-            GUILayout.EndScrollView();
-            GUILayout.EndVertical();
         }
 
         /// <summary>
