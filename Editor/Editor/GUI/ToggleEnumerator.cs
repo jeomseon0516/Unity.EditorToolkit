@@ -29,8 +29,8 @@ namespace Jeomseon.Editor.GUI
             _selectedGUIStyle = new(GUI.skin.box);
             _defaultGUIStyle = new(GUI.skin.box);
 
-            _selectedGUIStyle.normal.background = EditorGUIHelper.GetTexture2D(selectedStyleColor, _selectedGUIStyle);
-            _defaultGUIStyle.normal.background = EditorGUIHelper.GetTexture2D(defaultStyleColor, _defaultGUIStyle);
+            _selectedGUIStyle.normal.background = IMGUIHelper.GetTexture2D(selectedStyleColor, _selectedGUIStyle);
+            _defaultGUIStyle.normal.background = IMGUIHelper.GetTexture2D(defaultStyleColor, _defaultGUIStyle);
         }
 
         public T SelectEnumeratedToggles(Func<T, string> onSelectedText, params GUILayoutOption[] options)

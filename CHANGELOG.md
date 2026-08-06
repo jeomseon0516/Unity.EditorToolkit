@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+- `UIAnchorSetter`와 `ObjectNamingChanger`를 UI Toolkit `CreateGUI()` 기반으로 이전했습니다.
+  기존 IMGUI 동작과 메뉴 진입점은 유지했습니다.
+
+- `SerializedPropertyExtensions.GetPropertyValue()`를 `boxedValue` 기반으로 정리하고,
+  enum의 실제 값과 선언 이름 및 표시 이름을 함께 제공하는 public `SerializedEnumData`
+  유틸리티를 추가했습니다.
+
 - 범용 Attribute의 Drawer, Inspector 주입, 메서드 실행 구현과 샘플을 Attributes 패키지로 이동했습니다.
 - Runtime 및 Editor asmdef와 package.json에서 Attributes 의존성을 제거했습니다.
 

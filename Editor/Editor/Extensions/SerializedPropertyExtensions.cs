@@ -6,7 +6,7 @@ using Object = UnityEngine.Object;
 
 namespace Jeomseon.Editor.Extensions
 {
-    using Attribute = System.Attribute;
+    using Attribute = Attribute;
 
     public static class SerializedPropertyExtensions
     {
@@ -48,7 +48,7 @@ namespace Jeomseon.Editor.Extensions
                     if (targetType is not null)
                     { 
                         FieldInfo field = targetType.GetField(fieldNames[i], BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
-                       targetType = field?.FieldType;
+                        targetType = field?.FieldType;
                     }
                 }
             }
@@ -76,32 +76,57 @@ namespace Jeomseon.Editor.Extensions
 
         public static object GetPropertyValue(this SerializedProperty prop) => prop?.propertyType switch
         {
-            SerializedPropertyType.Generic or SerializedPropertyType.ManagedReference => prop.managedReferenceValue,
-            SerializedPropertyType.Integer or SerializedPropertyType.LayerMask or SerializedPropertyType.Character => prop.intValue,
-            SerializedPropertyType.Boolean => prop.boolValue,
-            SerializedPropertyType.Float => prop.floatValue,
-            SerializedPropertyType.String => prop.stringValue,
-            SerializedPropertyType.Color => prop.colorValue,
-            SerializedPropertyType.ObjectReference => prop.objectReferenceValue,
-            SerializedPropertyType.Enum => prop.enumNames[prop.enumValueIndex],
-            SerializedPropertyType.Vector2 => prop.vector2Value,
-            SerializedPropertyType.Vector3 => prop.vector3Value,
-            SerializedPropertyType.Vector4 => prop.vector4Value,
-            SerializedPropertyType.Rect => prop.rectValue,
-            SerializedPropertyType.ArraySize => prop.arraySize,
-            SerializedPropertyType.AnimationCurve => prop.animationCurveValue,
-            SerializedPropertyType.Bounds => prop.boundsValue,
-            SerializedPropertyType.Gradient => prop.gradientValue,
-            SerializedPropertyType.Quaternion => prop.quaternionValue,
-            SerializedPropertyType.ExposedReference => prop.exposedReferenceValue,
-            SerializedPropertyType.FixedBufferSize => prop.fixedBufferSize,
-            SerializedPropertyType.Vector2Int => prop.vector2IntValue,
-            SerializedPropertyType.Vector3Int => prop.vector3IntValue,
-            SerializedPropertyType.RectInt => prop.rectIntValue,
-            SerializedPropertyType.BoundsInt => prop.boundsIntValue,
-            SerializedPropertyType.Hash128 => prop.hash128Value,
-            _ => null,
+            null => null,
+            SerializedPropertyType.Enum => prop.GetEnumData(),
+            SerializedPropertyType.LayerMask =>
+                prop.intValue,
+            SerializedPropertyType.AnimationCurve =>
+                prop.animationCurveValue,
+            SerializedPropertyType.Gradient =>
+                prop.gradientValue,
+            SerializedPropertyType.ArraySize =>
+                prop.arraySize,
+            SerializedPropertyType.FixedBufferSize =>
+                prop.fixedBufferSize,
+            _ => prop.boxedValue
         };
+
+        public static SerializedEnumData GetEnumData(this SerializedProperty prop)
+        {
+            if (prop?.propertyType != SerializedPropertyType.Enum)
+                return null;
+
+            int index = prop.enumValueIndex;
+            string[] names = prop.enumNames;
+            string[] displayNames = prop.enumDisplayNames;
+            Type enumType = prop.GetPropertyType();
+            object rawValue = GetEnumRawValue(prop, enumType);
+            object value = enumType?.IsEnum == true
+                ? Enum.ToObject(enumType, rawValue)
+                : rawValue;
+
+            return new SerializedEnumData(
+                enumType,
+                value,
+                index,
+                names != null && index >= 0 && index < names.Length ? names[index] : null,
+                displayNames != null && index >= 0 && index < displayNames.Length ? displayNames[index] : null);
+        }
+
+        private static object GetEnumRawValue(SerializedProperty prop, Type enumType)
+        {
+            TypeCode typeCode = enumType?.IsEnum == true
+                ? Type.GetTypeCode(Enum.GetUnderlyingType(enumType))
+                : TypeCode.Int32;
+
+            return typeCode switch
+            {
+                TypeCode.UInt32 => prop.uintValue,
+                TypeCode.UInt64 => prop.ulongValue,
+                TypeCode.Int64 => prop.longValue,
+                _ => prop.intValue
+            };
+        }
     }
 }
 #endif

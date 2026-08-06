@@ -8,7 +8,7 @@ using UnityEditor;
 
 namespace Jeomseon.Editor
 {
-    public static class EditorGUIHelper
+    public static class IMGUIHelper
     {
         /* TODO(P2-01, api): UI Toolkit의 PropertyDrawer, InspectorElement 및 SettingsProvider로
          * 대체 가능한 IMGUI 편집기 기능을 단계적으로 이전합니다.
