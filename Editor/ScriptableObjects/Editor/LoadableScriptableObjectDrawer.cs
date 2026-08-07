@@ -3,8 +3,9 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UIElements;
 using UnityEditor;
-using UnityEditorInternal;
+using UnityEditor.UIElements;
 
 namespace Jeomseon.ScriptableObjects.Editor
 {
@@ -13,24 +14,30 @@ namespace Jeomseon.ScriptableObjects.Editor
     [CustomPropertyDrawer(typeof(LoadableScriptableObject<>), true)]
     internal sealed class LoadableScriptableObjectDrawer : PropertyDrawer
     {
-        private ReorderableList _reorderableList = null;
-
-        private void onEnable(Rect position, SerializedProperty property, GUIContent label)
+        public override VisualElement CreatePropertyGUI(SerializedProperty property)
         {
             SerializedProperty listProperty = property.FindPropertyRelative("_scriptableObjects")!;
+            RefreshScriptableObjects(property, listProperty);
 
-            _reorderableList = new(property.serializedObject, listProperty, true, true, false, false)
+            return new ListView
             {
-                drawHeaderCallback = rect => EditorGUI.LabelField(rect, label),
-                drawElementCallback = (rect, index, isActive, isFocused) =>
+                headerTitle = property.displayName,
+                showFoldoutHeader = true,
+                showBorder = true,
+                reorderable = true,
+                showAddRemoveFooter = false,
+                bindingPath = listProperty.propertyPath,
+                makeItem = () =>
                 {
-                    GUI.enabled = false;
-                    EditorGUI.PropertyField(rect, listProperty.GetArrayElementAtIndex(index), GUIContent.none);
-                    GUI.enabled = true;
-                },
-                elementHeight = EditorGUIUtility.singleLineHeight
+                    var field = new ObjectField { objectType = typeof(ScriptableObject) };
+                    field.SetEnabled(false);
+                    return field;
+                }
             };
+        }
 
+        private void RefreshScriptableObjects(SerializedProperty property, SerializedProperty listProperty)
+        {
             Type listFieldType = fieldInfo.FieldType.GetElementType() ?? fieldInfo.FieldType.GetGenericArguments()[0];
 
             List<ScriptableObject> scriptableObjects = AssetDatabase
@@ -47,21 +54,6 @@ namespace Jeomseon.ScriptableObjects.Editor
             }
 
             property.serializedObject.ApplyModifiedProperties();
-        }
-        
-        public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
-        {
-            if (_reorderableList is null)
-            {
-                onEnable(position, property, label);
-            }
-            
-            _reorderableList!.DoList(position);
-        }
-
-        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
-        {
-            return _reorderableList?.GetHeight() ?? EditorGUI.GetPropertyHeight(property, label, true);
         }
     }
 }

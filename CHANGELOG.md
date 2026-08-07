@@ -2,6 +2,33 @@
 
 ## [Unreleased]
 
+- `IconCreatorPreset`(`ScriptableObject`, `Create > Jeomseon > Icon Creator Preset`)을 추가해
+  atlas 크기·Divide Count·importer 설정(`TextureImporterType`, `SpriteImportMode`)·
+  TMP_SpriteAsset 생성 여부·기본 아이콘 목록을 프로젝트별로 저장/재사용할 수 있게 했습니다.
+  `IconCreator` 창에서 Preset을 불러오거나(Load) 현재 상태를 새/기존 Preset에 저장(Save As)할
+  수 있고, 마지막으로 사용한 Preset은 프로젝트별 `EditorPrefs`(`PlayerSettings.productGUID` 기준)로
+  기억합니다. Preset Inspector는 기본 아이콘 수가 Divide Count 격자 용량을 초과하는 경우와
+  비어 있는/텍스처를 읽을 수 없는 스프라이트 항목을 경고로 표시합니다.
+
+- `IconCreator`의 아이콘 픽셀 추출이 `sprite.texture`(packing/sheet 원본 전체)를 그대로 읽어
+  스프라이트 경계를 무시하던 결함을 수정했습니다. `sprite.textureRect`로 실제 스프라이트
+  영역만 잘라내도록 변경했고, Preview마다 누수되던 임시 `Texture2D`를 해제했습니다.
+  `Create Icon`의 SpriteRect 메타 계산도 별도로 재계산하지 않고 실제 저장되는
+  `_iconTexture` 크기를 기준으로 삼도록 정리해, 아이콘 수가 `Divide Count`보다 적을 때
+  발생하던 경계 좌표 불일치를 제거했습니다.
+
+- `LoadableScriptableObjectDrawer`를 `PropertyDrawer.OnGUI` + `ReorderableList`(IMGUI)에서
+  `CreatePropertyGUI()` + UI Toolkit `ListView`(`reorderable`, foldout 헤더)로 이전했습니다.
+  자산 재스캔·읽기 전용 항목 표시 동작은 유지했습니다.
+
+- `BulkComponentRemoverWindow`를 UI Toolkit `CreateGUI()` 기반으로 이전했습니다.
+  `LayerMaskField`/`TagField`로 레이어·태그 필터 UI를 대체했고, 타입 선택 팝업에
+  검색 필터를 추가했습니다. 동작과 메뉴 진입점은 유지했습니다.
+
+- 사용되지 않던 `EditorScrollController`(`Editor/Editor/GUI/EditorScrollView.cs`)를 제거했습니다.
+  `ScriptableObjectViewer`의 `IMGUIContainer`는 임의의 `ScriptableObject`가 제공하는
+  기본 `Editor.OnInspectorGUI()`(IMGUI 전용 계약)를 호스팅하기 위한 필수 경로이므로 유지합니다.
+
 - `UIAnchorSetter`와 `ObjectNamingChanger`를 UI Toolkit `CreateGUI()` 기반으로 이전했습니다.
   기존 IMGUI 동작과 메뉴 진입점은 유지했습니다.
 

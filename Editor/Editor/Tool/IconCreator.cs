@@ -24,13 +24,19 @@ namespace Jeomseon.Editor.Tool
         private readonly List<Sprite> _iconSources = new();
         private ReorderableList _reorderableIconSources;
         private Texture2D _iconTexture = null;
+        private IconCreatorPreset _preset;
 
-        /* TODO(P2-03, editor-settings): 고정된 atlas 크기, 분할 수, importer와 TMP 생성 옵션을
-         * ScriptableObject preset 또는 EditorPrefs로 저장하고 프로젝트별 기본값을 선택하게 합니다.
-         * preset Inspector에서 출력 크기·sprite 수 불일치와 읽기 불가능 texture를 사전 검증합니다.
-         */
+        private static string LastPresetPrefsKey =>
+            $"Jeomseon.EditorToolkit.IconCreator.LastPreset.{PlayerSettings.productGUID}";
+
         private void OnEnable()
         {
+            string lastPresetPath = EditorPrefs.GetString(LastPresetPrefsKey, string.Empty);
+            if (!string.IsNullOrEmpty(lastPresetPath))
+            {
+                _preset = AssetDatabase.LoadAssetAtPath<IconCreatorPreset>(lastPresetPath);
+            }
+
             _reorderableIconSources = new(
                 _iconSources,
                 typeof(Sprite),
@@ -57,6 +63,8 @@ namespace Jeomseon.Editor.Tool
 
         public void OnGUI()
         {
+            DrawPresetControls();
+
             _size = EditorGUILayout.IntSlider(new GUIContent("Size"), _size, 128, 2048);
             _divideCount = Mathf.Clamp(EditorGUILayout.IntField(new GUIContent("Divide Count"), _divideCount), 1, 32);
 
@@ -70,12 +78,12 @@ namespace Jeomseon.Editor.Tool
 
             _reorderableIconSources.DoLayoutList();
 
-            if (isCreate)
+            if (isCreate && _iconTexture)
             {
-                int sizeMax = _size * _divideCount;
-                int rows = (_iconSources.Count + _divideCount - 1) / _divideCount;
-                int atlasWidth = Mathf.Min(_size * _divideCount, sizeMax);
-                int atlasHeight = rows * _size;
+                // SpriteRect 메타는 실제로 저장되는 _iconTexture의 픽셀 크기를 기준으로 계산해야 합니다.
+                // Preview에서 생성한 atlas 폭은 아이콘 개수가 divideCount보다 적을 때 sizeMax보다 좁을 수 있습니다.
+                int atlasWidth = _iconTexture.width;
+                int atlasHeight = _iconTexture.height;
 
                 string path = EditorUtility.SaveFilePanelInProject(
                     "Save Atlas",
@@ -92,8 +100,8 @@ namespace Jeomseon.Editor.Tool
                     TextureImporter importer = AssetImporter.GetAtPath(path) as TextureImporter;
                     if (importer)
                     {
-                        importer.textureType = TextureImporterType.Sprite;
-                        importer.spriteImportMode = SpriteImportMode.Multiple;
+                        importer.textureType = _preset ? _preset.textureType : TextureImporterType.Sprite;
+                        importer.spriteImportMode = _preset ? _preset.spriteImportMode : SpriteImportMode.Multiple;
 
                         AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
 
@@ -127,8 +135,6 @@ namespace Jeomseon.Editor.Tool
                             currentX += _size;
                         }
 
-                        /* TODO(P2-02, correctness): 아이콘 픽셀 경계 처리와 알파 합성 결과를 검증하고 수정합니다.
-                         */
                         SpriteDataProviderFactories factory = new();
                         factory.Init();
                         ISpriteEditorDataProvider dataProvider = factory.GetSpriteEditorDataProviderFromObject(importer);
@@ -137,42 +143,45 @@ namespace Jeomseon.Editor.Tool
                         dataProvider.Apply();
                         importer.SaveAndReimport();
 
-                        // 스프라이트 아틀라스에서 스프라이트 목록을 가져오기
-                        Sprite[] sprites = AssetDatabase.LoadAllAssetRepresentationsAtPath(path).OfType<Sprite>().ToArray();
-                        if (sprites.Length == 0)
+                        if (_preset == null || _preset.generateTmpSpriteAsset)
                         {
-                            Debug.LogError("No sprites found in the atlas.");
-                            return;
-                        }
-
-                        // TMP_SpriteAsset 생성
-                        TMP_SpriteAsset spriteAsset = CreateInstance<TMP_SpriteAsset>();
-                        spriteAsset.spriteSheet = atlasTexture;
-                        spriteAsset.spriteInfoList = new();
-
-                        foreach (Sprite sprite in sprites)
-                        {
-                            TMP_Sprite tmpSprite = new TMP_Sprite
+                            // 스프라이트 아틀라스에서 스프라이트 목록을 가져오기
+                            Sprite[] sprites = AssetDatabase.LoadAllAssetRepresentationsAtPath(path).OfType<Sprite>().ToArray();
+                            if (sprites.Length == 0)
                             {
-                                id = spriteAsset.spriteInfoList.Count,
-                                name = sprite.name,
-                                x = sprite.rect.x,
-                                y = sprite.rect.y,
-                                width = sprite.rect.width,
-                                height = sprite.rect.height,
-                                pivot = sprite.pivot,
-                                sprite = sprite
-                            };
+                                Debug.LogError("No sprites found in the atlas.");
+                                return;
+                            }
 
-                            spriteAsset.spriteInfoList.Add(tmpSprite);
+                            // TMP_SpriteAsset 생성
+                            TMP_SpriteAsset spriteAsset = CreateInstance<TMP_SpriteAsset>();
+                            spriteAsset.spriteSheet = atlasTexture;
+                            spriteAsset.spriteInfoList = new();
+
+                            foreach (Sprite sprite in sprites)
+                            {
+                                TMP_Sprite tmpSprite = new TMP_Sprite
+                                {
+                                    id = spriteAsset.spriteInfoList.Count,
+                                    name = sprite.name,
+                                    x = sprite.rect.x,
+                                    y = sprite.rect.y,
+                                    width = sprite.rect.width,
+                                    height = sprite.rect.height,
+                                    pivot = sprite.pivot,
+                                    sprite = sprite
+                                };
+
+                                spriteAsset.spriteInfoList.Add(tmpSprite);
+                            }
+
+                            // TMP_SpriteAsset 저장
+                            string assetPath = System.IO.Path.ChangeExtension(path, ".asset");
+                            AssetDatabase.CreateAsset(spriteAsset, assetPath);
+                            AssetDatabase.SaveAssets();
+
+                            Debug.Log("TMP_SpriteAsset created at: " + assetPath);
                         }
-
-                        // TMP_SpriteAsset 저장
-                        string assetPath = System.IO.Path.ChangeExtension(path, ".asset");
-                        AssetDatabase.CreateAsset(spriteAsset, assetPath);
-                        AssetDatabase.SaveAssets();
-
-                        Debug.Log("TMP_SpriteAsset created at: " + assetPath);
                     }
                 }
             }
@@ -190,6 +199,14 @@ namespace Jeomseon.Editor.Tool
                     .Select(sprite =>
                     {
                         if (!sprite) return null;
+
+                        // sprite.texture는 packing/sheet 원본 전체 텍스처이므로,
+                        // 이 스프라이트가 차지하는 부분 영역(textureRect)만 잘라내야 합니다.
+                        Rect textureRect = sprite.textureRect;
+                        int rectX = Mathf.RoundToInt(textureRect.x);
+                        int rectY = Mathf.RoundToInt(textureRect.y);
+                        int rectWidth = Mathf.RoundToInt(textureRect.width);
+                        int rectHeight = Mathf.RoundToInt(textureRect.height);
 
                         int width = sprite.texture.width;
                         int height = sprite.texture.height;
@@ -210,10 +227,13 @@ namespace Jeomseon.Editor.Tool
                         RenderTexture.active = null;
                         renderTexture.Release();
 
+                        Color[] spritePixels = readableTexture.GetPixels(rectX, rectY, rectWidth, rectHeight);
+                        DestroyImmediate(readableTexture);
+
                         return TexturePixelResampler.ResizeToFit(
-                            readableTexture.GetPixels(0, 0, width, height),
-                            width,
-                            height,
+                            spritePixels,
+                            rectWidth,
+                            rectHeight,
                             _size,
                             _size);
                     })
@@ -261,6 +281,66 @@ namespace Jeomseon.Editor.Tool
                 atlasTexture.Apply();
                 _iconTexture = atlasTexture;
             }
+        }
+
+        private void DrawPresetControls()
+        {
+            IconCreatorPreset picked = (IconCreatorPreset)EditorGUILayout.ObjectField(
+                new GUIContent("Preset"), _preset, typeof(IconCreatorPreset), false);
+            if (picked != _preset)
+            {
+                _preset = picked;
+                EditorPrefs.SetString(LastPresetPrefsKey, _preset ? AssetDatabase.GetAssetPath(_preset) : string.Empty);
+            }
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                using (new EditorGUI.DisabledScope(!_preset))
+                {
+                    if (GUILayout.Button("Load Preset")) LoadPreset();
+                }
+                if (GUILayout.Button("Save As Preset")) SaveAsPreset();
+            }
+
+            EditorGUILayout.Space(EditorGUIUtility.singleLineHeight);
+        }
+
+        private void LoadPreset()
+        {
+            if (!_preset) return;
+
+            _size = _preset.size;
+            _divideCount = _preset.divideCount;
+            _iconSources.Clear();
+            _iconSources.AddRange(_preset.defaultIconSources);
+        }
+
+        private void SaveAsPreset()
+        {
+            string path = EditorUtility.SaveFilePanelInProject(
+                "Save Icon Creator Preset",
+                "IconCreatorPreset",
+                "asset",
+                "프리셋으로 저장할 위치를 선택하세요");
+            if (string.IsNullOrEmpty(path)) return;
+
+            IconCreatorPreset preset = AssetDatabase.LoadAssetAtPath<IconCreatorPreset>(path);
+            bool isNew = !preset;
+            if (isNew) preset = CreateInstance<IconCreatorPreset>();
+
+            preset.size = _size;
+            preset.divideCount = _divideCount;
+            preset.defaultIconSources = new List<Sprite>(_iconSources);
+
+            if (isNew)
+            {
+                AssetDatabase.CreateAsset(preset, path);
+            }
+            EditorUtility.SetDirty(preset);
+            AssetDatabase.SaveAssets();
+
+            _preset = preset;
+            EditorPrefs.SetString(LastPresetPrefsKey, path);
         }
     }
 }

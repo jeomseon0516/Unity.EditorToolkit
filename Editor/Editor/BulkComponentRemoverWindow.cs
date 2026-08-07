@@ -5,9 +5,10 @@ using System.Linq;
 using Jeomseon.Collections;
 using UnityEditor;
 using UnityEditor.SceneManagement;
-using UnityEditorInternal;
+using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UIElements;
 
 /// <summary>
 /// Bulk Component Remover (통합판)
@@ -26,7 +27,6 @@ namespace Jeomseon.Editor
         // 상태
         // ----------------------------------------------------------------------------
         private MonoScript _monoScript;                 // 컴포넌트 MonoScript(컴포넌트만 허용)
-        private bool _monoIsInvalidPick;                // 컴포넌트가 아닌 스크립트 선택 시 경고용
         private Type _resolvedType;                     // 최종 해석된 컴포넌트 타입(브라우저/MonoScript/문자열)
         private string _typeName = string.Empty;        // 직접 입력 타입명 (FQN 또는 간단 이름)
 
@@ -37,7 +37,7 @@ namespace Jeomseon.Editor
         private bool _filterByLayer = false;
         private LayerMask _layerMask = ~0;              // 전체 레이어 기본값
         private bool _filterByTag = false;
-        private int _tagIndex = 0;                      // InternalEditorUtility.tags 인덱스
+        private string _tag = "Untagged";
 
         [Serializable]
         private class Match
@@ -49,7 +49,23 @@ namespace Jeomseon.Editor
         }
 
         private readonly List<Match> _matches = new();
-        private Vector2 _scroll;
+
+        // ----------------------------------------------------------------------------
+        // UI Toolkit 요소
+        // ----------------------------------------------------------------------------
+        private VisualElement _targetComponentSection;
+        private Label _selectedTypeLabel;
+        private ObjectField _monoScriptField;
+        private HelpBox _monoWarningBox;
+        private TextField _typeNameField;
+        private VisualElement _layerMaskRow;
+        private VisualElement _tagRow;
+        private Label _selectionCountLabel;
+        private HelpBox _selectionWarningBox;
+        private Button _previewButton;
+        private Button _removeButton;
+        private Label _matchesCountLabel;
+        private ScrollView _matchesScroll;
 
         // ----------------------------------------------------------------------------
         // 메뉴
@@ -65,226 +81,368 @@ namespace Jeomseon.Editor
         // ----------------------------------------------------------------------------
         // GUI
         // ----------------------------------------------------------------------------
-        private void OnGUI()
+        private void CreateGUI()
         {
-            // 모드
-            EditorGUILayout.Space();
-            EditorGUILayout.LabelField("Mode", EditorStyles.boldLabel);
-            bool missingOnly = EditorGUILayout.ToggleLeft(
-                new GUIContent("Missing Script Cleanup Only", "Missing Script만 제거합니다 (타입 지정 무시)"),
-                _missingOnly);
-            if (missingOnly != _missingOnly)
+            var root = rootVisualElement;
+            root.style.paddingLeft = 8;
+            root.style.paddingRight = 8;
+            root.style.paddingTop = 8;
+            root.style.paddingBottom = 8;
+
+            root.Add(BuildModeSection());
+            _targetComponentSection = BuildTargetComponentSection();
+            root.Add(_targetComponentSection);
+            root.Add(BuildScopeAndFiltersSection());
+            root.Add(BuildSelectionInfoSection());
+            root.Add(BuildActionsSection());
+            root.Add(BuildMatchesSection());
+
+            RefreshTargetComponentEnabled();
+            InvalidatePreview();
+        }
+
+        private VisualElement BuildModeSection()
+        {
+            var section = new VisualElement();
+            section.Add(new Label("Mode") { style = { unityFontStyleAndWeight = FontStyle.Bold } });
+
+            var missingOnlyToggle = new Toggle("Missing Script Cleanup Only")
             {
-                _missingOnly = missingOnly;
+                value = _missingOnly,
+                tooltip = "Missing Script만 제거합니다 (타입 지정 무시)"
+            };
+            missingOnlyToggle.RegisterValueChangedCallback(evt =>
+            {
+                _missingOnly = evt.newValue;
+                RefreshTargetComponentEnabled();
                 InvalidatePreview();
-            }
+            });
+            section.Add(missingOnlyToggle);
+            return section;
+        }
 
-            // 대상 컴포넌트 지정
-            EditorGUILayout.Space();
-            using (new EditorGUI.DisabledScope(_missingOnly))
+        private VisualElement BuildTargetComponentSection()
+        {
+            var section = new VisualElement();
+            section.Add(new Label("Target Component") { style = { unityFontStyleAndWeight = FontStyle.Bold } });
+
+            var browseRow = new VisualElement { style = { flexDirection = FlexDirection.Row } };
+            var browseButton = new Button(BrowseComponentTypes)
             {
-                EditorGUILayout.LabelField("Target Component", EditorStyles.boldLabel);
+                text = "Browse Component Types...",
+                tooltip = "컴포넌트 타입 선택 팝업"
+            };
+            browseButton.style.width = 220;
+            browseRow.Add(browseButton);
 
-                // 1) 컴포넌트 타입 전용 브라우저 버튼
-                using (new EditorGUILayout.HorizontalScope())
-                {
-                    if (GUILayout.Button(
-                            new GUIContent("Browse Component Types...", "컴포넌트 타입 선택 팝업"),
-                            GUILayout.Width(220)))
-                    {
-                        Type pickedType = ComponentTypePicker.ShowPicker();
-                        if (pickedType != null)
-                        {
-                            _resolvedType = pickedType;
-                            _typeName = pickedType.FullName ?? pickedType.Name;
-                            _monoScript = null;
-                            _monoIsInvalidPick = false;
-                            InvalidatePreview();
-                        }
-                    }
+            _selectedTypeLabel = new Label();
+            browseRow.Add(_selectedTypeLabel);
+            section.Add(browseRow);
 
-                    if (_resolvedType != null)
-                        EditorGUILayout.LabelField(new GUIContent($"Selected: {_resolvedType.FullName}"));
-                }
-
-                // 2) MonoScript 드래그 (컴포넌트만 허용)
-                EditorGUI.BeginChangeCheck();
-                var picked = (MonoScript)EditorGUILayout.ObjectField(new GUIContent("MonoScript", "Component 타입만 허용"), _monoScript, typeof(MonoScript), false);
-                if (EditorGUI.EndChangeCheck())
-                {
-                    _monoIsInvalidPick = false;
-                    if (picked == null)
-                    {
-                        _monoScript = null;
-                        _resolvedType = null;
-                    }
-                    else
-                    {
-                        var cls = picked.GetClass();
-                        if (cls != null && typeof(Component).IsAssignableFrom(cls))
-                        {
-                            _monoScript = picked;
-                            _resolvedType = null; // MonoScript 우선 사용 시 타입 직접 선택은 초기화
-                        }
-                        else
-                        {
-                            _monoScript = null;
-                            _monoIsInvalidPick = true;
-                        }
-                    }
-
-                    InvalidatePreview();
-                }
-                if (_monoIsInvalidPick)
-                    EditorGUILayout.HelpBox("선택한 MonoScript가 Component 타입이 아닙니다.", MessageType.Warning);
-
-                // 3) 타입명 직접 입력
-                using (new EditorGUILayout.HorizontalScope())
-                {
-                    EditorGUI.BeginChangeCheck();
-                    _typeName = EditorGUILayout.TextField(new GUIContent("Type Name", "예: BoxCollider, UnityEngine.BoxCollider, Namespace.MyComponent"), _typeName);
-                    if (EditorGUI.EndChangeCheck())
-                    {
-                        _resolvedType = null;
-                        _monoScript = null;
-                        _monoIsInvalidPick = false;
-                        InvalidatePreview();
-                    }
-
-                    if (GUILayout.Button("Find Type", GUILayout.Width(90)))
-                    {
-                        _resolvedType = ResolveType();
-                        InvalidatePreview();
-                    }
-                }
-            }
-
-            // 범위/필터
-            EditorGUILayout.Space();
-            EditorGUILayout.LabelField("Scope & Filters", EditorStyles.boldLabel);
-            bool includeInactive = EditorGUILayout.Toggle(
-                new GUIContent("Include Inactive", "비활성 오브젝트 포함"),
-                _includeInactive);
-            if (includeInactive != _includeInactive)
+            _monoScriptField = new ObjectField("MonoScript")
             {
-                _includeInactive = includeInactive;
+                objectType = typeof(MonoScript),
+                allowSceneObjects = false,
+                tooltip = "Component 타입만 허용",
+                value = _monoScript
+            };
+            _monoScriptField.RegisterValueChangedCallback(evt => OnMonoScriptPicked(evt.newValue as MonoScript));
+            section.Add(_monoScriptField);
+
+            _monoWarningBox = new HelpBox("선택한 MonoScript가 Component 타입이 아닙니다.", HelpBoxMessageType.Warning)
+            {
+                style = { display = DisplayStyle.None }
+            };
+            section.Add(_monoWarningBox);
+
+            var typeNameRow = new VisualElement { style = { flexDirection = FlexDirection.Row } };
+            _typeNameField = new TextField("Type Name")
+            {
+                value = _typeName,
+                tooltip = "예: BoxCollider, UnityEngine.BoxCollider, Namespace.MyComponent",
+                style = { flexGrow = 1 }
+            };
+            _typeNameField.RegisterValueChangedCallback(evt =>
+            {
+                _typeName = evt.newValue;
+                _resolvedType = null;
+                _monoScript = null;
+                _monoWarningBox.style.display = DisplayStyle.None;
+                _monoScriptField.SetValueWithoutNotify(null);
+                RefreshSelectedType();
                 InvalidatePreview();
-            }
+            });
+            typeNameRow.Add(_typeNameField);
 
-            bool searchInSelectionChildren = EditorGUILayout.Toggle(
-                new GUIContent("Search Children", "선택 오브젝트의 자식 포함"),
-                _searchInSelectionChildren);
-            if (searchInSelectionChildren != _searchInSelectionChildren)
+            var findTypeButton = new Button(() =>
             {
-                _searchInSelectionChildren = searchInSelectionChildren;
+                _resolvedType = ResolveType();
+                RefreshSelectedType();
                 InvalidatePreview();
-            }
+            }) { text = "Find Type" };
+            findTypeButton.style.width = 90;
+            typeNameRow.Add(findTypeButton);
+            section.Add(typeNameRow);
 
-            bool filterByLayer = EditorGUILayout.Toggle(
-                new GUIContent("Filter by Layer", "특정 레이어만 대상"),
-                _filterByLayer);
-            if (filterByLayer != _filterByLayer)
+            return section;
+        }
+
+        private VisualElement BuildScopeAndFiltersSection()
+        {
+            var section = new VisualElement();
+            section.Add(new Label("Scope & Filters") { style = { unityFontStyleAndWeight = FontStyle.Bold } });
+
+            var includeInactiveToggle = new Toggle("Include Inactive")
             {
-                _filterByLayer = filterByLayer;
+                value = _includeInactive,
+                tooltip = "비활성 오브젝트 포함"
+            };
+            includeInactiveToggle.RegisterValueChangedCallback(evt =>
+            {
+                _includeInactive = evt.newValue;
                 InvalidatePreview();
-            }
+            });
+            section.Add(includeInactiveToggle);
 
-            if (_filterByLayer)
+            var searchChildrenToggle = new Toggle("Search Children")
             {
-                // 다중 선택 지원 LayerMask UI
-                LayerMask layerMask = EditorGUILayoutLayerMask.LayerFieldMask(
-                    new GUIContent("Layer Mask"),
-                    _layerMask);
-                if (layerMask.value != _layerMask.value)
+                value = _searchInSelectionChildren,
+                tooltip = "선택 오브젝트의 자식 포함"
+            };
+            searchChildrenToggle.RegisterValueChangedCallback(evt =>
+            {
+                _searchInSelectionChildren = evt.newValue;
+                InvalidatePreview();
+            });
+            section.Add(searchChildrenToggle);
+
+            var filterByLayerToggle = new Toggle("Filter by Layer")
+            {
+                value = _filterByLayer,
+                tooltip = "특정 레이어만 대상"
+            };
+            filterByLayerToggle.RegisterValueChangedCallback(evt =>
+            {
+                _filterByLayer = evt.newValue;
+                _layerMaskRow.style.display = _filterByLayer ? DisplayStyle.Flex : DisplayStyle.None;
+                InvalidatePreview();
+            });
+            section.Add(filterByLayerToggle);
+
+            _layerMaskRow = new VisualElement
+            {
+                style = { display = _filterByLayer ? DisplayStyle.Flex : DisplayStyle.None }
+            };
+            var layerMaskField = new LayerMaskField("Layer Mask", _layerMask.value);
+            layerMaskField.RegisterValueChangedCallback(evt =>
+            {
+                _layerMask = evt.newValue;
+                InvalidatePreview();
+            });
+            _layerMaskRow.Add(layerMaskField);
+            section.Add(_layerMaskRow);
+
+            var filterByTagToggle = new Toggle("Filter by Tag")
+            {
+                value = _filterByTag,
+                tooltip = "특정 태그만 대상"
+            };
+            filterByTagToggle.RegisterValueChangedCallback(evt =>
+            {
+                _filterByTag = evt.newValue;
+                _tagRow.style.display = _filterByTag ? DisplayStyle.Flex : DisplayStyle.None;
+                InvalidatePreview();
+            });
+            section.Add(filterByTagToggle);
+
+            _tagRow = new VisualElement
+            {
+                style = { display = _filterByTag ? DisplayStyle.Flex : DisplayStyle.None }
+            };
+            var tagField = new TagField("Tag", _tag);
+            tagField.RegisterValueChangedCallback(evt =>
+            {
+                _tag = evt.newValue;
+                InvalidatePreview();
+            });
+            _tagRow.Add(tagField);
+            section.Add(_tagRow);
+
+            return section;
+        }
+
+        private VisualElement BuildSelectionInfoSection()
+        {
+            var section = new VisualElement();
+
+            _selectionCountLabel = new Label();
+            section.Add(_selectionCountLabel);
+
+            _selectionWarningBox = new HelpBox(string.Empty, HelpBoxMessageType.Info)
+            {
+                style = { display = DisplayStyle.None }
+            };
+            section.Add(_selectionWarningBox);
+
+            return section;
+        }
+
+        private VisualElement BuildActionsSection()
+        {
+            var row = new VisualElement { style = { flexDirection = FlexDirection.Row } };
+
+            _previewButton = new Button(() =>
+            {
+                Preview();
+                RefreshMatches();
+                RefreshSelectionInfo();
+                RefreshInteractable();
+            }) { text = "Preview Matches" };
+            row.Add(_previewButton);
+
+            _removeButton = new Button(() =>
+            {
+                RemoveNow();
+                RefreshMatches();
+                RefreshInteractable();
+            })
+            {
+                text = "Remove Components",
+                tooltip = "미리보기 결과를 기준으로 제거"
+            };
+            row.Add(_removeButton);
+
+            return row;
+        }
+
+        private VisualElement BuildMatchesSection()
+        {
+            var section = new VisualElement();
+
+            _matchesCountLabel = new Label { style = { unityFontStyleAndWeight = FontStyle.Bold } };
+            section.Add(_matchesCountLabel);
+
+            _matchesScroll = new ScrollView { style = { flexGrow = 1 } };
+            section.Add(_matchesScroll);
+
+            return section;
+        }
+
+        private void OnMonoScriptPicked(MonoScript picked)
+        {
+            _monoWarningBox.style.display = DisplayStyle.None;
+            if (picked == null)
+            {
+                _monoScript = null;
+                _resolvedType = null;
+            }
+            else
+            {
+                var cls = picked.GetClass();
+                if (cls != null && typeof(Component).IsAssignableFrom(cls))
                 {
-                    _layerMask = layerMask;
-                    InvalidatePreview();
-                }
-            }
-
-            bool filterByTag = EditorGUILayout.Toggle(
-                new GUIContent("Filter by Tag", "특정 태그만 대상"),
-                _filterByTag);
-            if (filterByTag != _filterByTag)
-            {
-                _filterByTag = filterByTag;
-                InvalidatePreview();
-            }
-
-            if (_filterByTag)
-            {
-                var tags = InternalEditorUtility.tags;
-                if (tags == null || tags.Length == 0)
-                {
-                    EditorGUILayout.HelpBox("등록된 태그가 없습니다. Project Settings > Tags and Layers에서 태그를 추가하세요.", MessageType.Info);
+                    _monoScript = picked;
+                    _resolvedType = null; // MonoScript 우선 사용 시 타입 직접 선택은 초기화
                 }
                 else
                 {
-                    int tagIndex = EditorGUILayout.Popup(
-                        "Tag",
-                        Mathf.Clamp(_tagIndex, 0, tags.Length - 1),
-                        tags);
-                    if (tagIndex != _tagIndex)
-                    {
-                        _tagIndex = tagIndex;
-                        InvalidatePreview();
-                    }
+                    _monoScript = null;
+                    _monoWarningBox.style.display = DisplayStyle.Flex;
                 }
             }
 
-            // 선택 안내 및 액션
-            EditorGUILayout.Space();
-            DrawSelectionInfo();
-
-            using (new EditorGUILayout.HorizontalScope())
-            {
-                UnityEngine.GUI.enabled = CanSearch();
-                if (GUILayout.Button("Preview Matches")) Preview();
-
-                UnityEngine.GUI.enabled = _matches.Count > 0;
-                if (GUILayout.Button(new GUIContent("Remove Components", "미리보기 결과를 기준으로 제거"))) RemoveNow();
-                UnityEngine.GUI.enabled = true;
-            }
-
-            // 결과 리스트
-            EditorGUILayout.Space();
-            DrawMatches();
+            RefreshSelectedType();
+            InvalidatePreview();
         }
 
-        private void DrawSelectionInfo()
+        private void BrowseComponentTypes()
+        {
+            Type pickedType = ComponentTypePicker.ShowPicker();
+            if (pickedType == null)
+                return;
+
+            _resolvedType = pickedType;
+            _typeName = pickedType.FullName ?? pickedType.Name;
+            _monoScript = null;
+            _monoWarningBox.style.display = DisplayStyle.None;
+            _typeNameField.SetValueWithoutNotify(_typeName);
+            _monoScriptField.SetValueWithoutNotify(null);
+            RefreshSelectedType();
+            InvalidatePreview();
+        }
+
+        private void RefreshSelectedType()
+        {
+            _selectedTypeLabel.text = _resolvedType != null ? $"Selected: {_resolvedType.FullName}" : string.Empty;
+        }
+
+        private void RefreshSelectionInfo()
         {
             var selected = Selection.gameObjects;
             if (selected == null || selected.Length == 0)
             {
-                EditorGUILayout.HelpBox("하나 이상의 GameObject를 선택하세요.", MessageType.Info);
+                _selectionCountLabel.text = string.Empty;
+                _selectionWarningBox.text = "하나 이상의 GameObject를 선택하세요.";
+                _selectionWarningBox.messageType = HelpBoxMessageType.Info;
+                _selectionWarningBox.style.display = DisplayStyle.Flex;
                 return;
             }
 
-            EditorGUILayout.LabelField($"Selected Objects: {selected.Length}");
+            _selectionCountLabel.text = $"Selected Objects: {selected.Length}";
+
             if (!CanSearch())
             {
-                var msg = _missingOnly ? "Missing Script 모드에서 Preview를 실행하세요." : "제거할 컴포넌트 타입을 지정하세요 (MonoScript/Type Name/브라우저).";
-                EditorGUILayout.HelpBox(msg, MessageType.Warning);
+                _selectionWarningBox.text = _missingOnly
+                    ? "Missing Script 모드에서 Preview를 실행하세요."
+                    : "제거할 컴포넌트 타입을 지정하세요 (MonoScript/Type Name/브라우저).";
+                _selectionWarningBox.messageType = HelpBoxMessageType.Warning;
+                _selectionWarningBox.style.display = DisplayStyle.Flex;
+            }
+            else
+            {
+                _selectionWarningBox.style.display = DisplayStyle.None;
             }
         }
 
-        private void DrawMatches()
+        private void RefreshInteractable()
         {
-            EditorGUILayout.LabelField($"Matches: {_matches.Count}", EditorStyles.boldLabel);
-            _scroll = EditorGUILayout.BeginScrollView(_scroll);
-            foreach (var m in _matches)
+            _previewButton.SetEnabled(CanSearch());
+            _removeButton.SetEnabled(_matches.Count > 0);
+        }
+
+        private void RefreshTargetComponentEnabled()
+        {
+            _targetComponentSection.SetEnabled(!_missingOnly);
+        }
+
+        private void RefreshMatches()
+        {
+            _matchesCountLabel.text = $"Matches: {_matches.Count}";
+            _matchesScroll.Clear();
+
+            foreach (var match in _matches)
             {
-                using (new EditorGUILayout.HorizontalScope())
-                {
-                    EditorGUILayout.ObjectField(m.go, typeof(GameObject), true);
-                    GUILayout.Label(m.ToString(), GUILayout.Width(200));
-                    using (new GUIEnabledScope(false))
-                    {
-                        EditorGUILayout.ObjectField(m.component, typeof(Component), true);
-                    }
-                }
+                var row = new VisualElement { style = { flexDirection = FlexDirection.Row } };
+
+                var goField = new ObjectField { objectType = typeof(GameObject), value = match.go, style = { flexGrow = 1 } };
+                row.Add(goField);
+
+                row.Add(new Label(match.ToString()) { style = { width = 200 } });
+
+                var componentField = new ObjectField { objectType = typeof(Component), value = match.component, style = { flexGrow = 1 } };
+                componentField.SetEnabled(false);
+                row.Add(componentField);
+
+                _matchesScroll.Add(row);
             }
-            EditorGUILayout.EndScrollView();
+        }
+
+        private void InvalidatePreview()
+        {
+            _matches.Clear();
+            RefreshMatches();
+            RefreshSelectionInfo();
+            RefreshInteractable();
         }
 
         // ----------------------------------------------------------------------------
@@ -376,6 +534,7 @@ namespace Jeomseon.Editor
             if (!_missingOnly)
             {
                 _resolvedType = ResolveType();
+                RefreshSelectedType();
                 if (_resolvedType == null)
                 {
                     _matches.Clear();
@@ -448,12 +607,9 @@ namespace Jeomseon.Editor
             {
                 if (((1 << go.layer) & _layerMask.value) == 0) return false;
             }
-            if (_filterByTag)
+            if (_filterByTag && !go.CompareTag(_tag))
             {
-                var tags = InternalEditorUtility.tags;
-                if (tags == null || tags.Length == 0) return false;
-                var tag = tags[Mathf.Clamp(_tagIndex, 0, tags.Length - 1)];
-                if (!go.CompareTag(tag)) return false;
+                return false;
             }
             return true;
         }
@@ -489,7 +645,7 @@ namespace Jeomseon.Editor
                 var perGo = _matches
                     .Select(m => m.go)
                     .Distinct();
-                
+
                 foreach (var go in perGo)
                 {
                     if (go == null) continue;
@@ -542,12 +698,6 @@ namespace Jeomseon.Editor
         private void OnSelectionChange()
         {
             InvalidatePreview();
-            Repaint();
-        }
-
-        private void InvalidatePreview()
-        {
-            _matches.Clear();
         }
 
         // 컴포넌트 타입 전용 선택 팝업 (TypeCache 사용)
@@ -569,84 +719,68 @@ namespace Jeomseon.Editor
             }
         }
 
-        // 작은 팝업 리스트 유틸
+        // 검색 가능한 팝업 리스트 유틸
         private class PopupListWindow : EditorWindow
         {
             private string[] _options;
-            private Action<int> _onPick;
-            private Vector2 _scroll;
+            private string _filter = string.Empty;
+            private int _picked = -1;
+            private ScrollView _list;
 
             public static int Show(string title, string[] options)
             {
-                int picked = -1;
                 var wnd = CreateInstance<PopupListWindow>();
                 wnd.titleContent = new GUIContent(title);
                 wnd._options = options ?? Array.Empty<string>();
-                wnd._onPick = i => { picked = i; wnd.Close(); };
-                wnd.position = new Rect(Screen.width / 2f, Screen.height / 2f, 420f, Mathf.Min(400f, 24f * (options?.Length ?? 1) + 16f));
+                wnd.position = new Rect(Screen.width / 2f, Screen.height / 2f, 420f, Mathf.Min(420f, 24f * (options?.Length ?? 1) + 56f));
                 wnd.ShowModal();
-                return picked;
+                return wnd._picked;
             }
 
-            private void OnGUI()
+            private void CreateGUI()
             {
-                _scroll = EditorGUILayout.BeginScrollView(_scroll);
-                for (int i = 0; i < _options.Length; i++)
+                var root = rootVisualElement;
+                root.style.paddingLeft = 4;
+                root.style.paddingRight = 4;
+                root.style.paddingTop = 4;
+                root.style.paddingBottom = 4;
+
+                var search = new ToolbarSearchField();
+                search.RegisterValueChangedCallback(evt =>
                 {
-                    if (GUILayout.Button(_options[i], GUILayout.Height(22)))
-                    {
-                        _onPick?.Invoke(i);
-                    }
+                    _filter = evt.newValue;
+                    RefreshList();
+                });
+                root.Add(search);
+
+                _list = new ScrollView { style = { flexGrow = 1 } };
+                root.Add(_list);
+
+                RefreshList();
+            }
+
+            private void RefreshList()
+            {
+                _list.Clear();
+
+                IEnumerable<(int index, string option)> entries = _options.Select((option, index) => (index, option));
+                if (!string.IsNullOrEmpty(_filter))
+                {
+                    entries = entries.Where(entry =>
+                        entry.option.IndexOf(_filter, StringComparison.OrdinalIgnoreCase) >= 0);
                 }
-                EditorGUILayout.EndScrollView();
+
+                foreach (var (index, option) in entries)
+                {
+                    var button = new Button(() =>
+                    {
+                        _picked = index;
+                        Close();
+                    }) { text = option };
+                    button.style.unityTextAlign = TextAnchor.MiddleLeft;
+                    _list.Add(button);
+                }
             }
-        }
-
-        private readonly struct GUIEnabledScope : IDisposable
-        {
-            private readonly bool _prev;
-            public GUIEnabledScope(bool enabled)
-            {
-                _prev = UnityEngine.GUI.enabled;
-                UnityEngine.GUI.enabled = enabled;
-            }
-            public void Dispose() { UnityEngine.GUI.enabled = _prev; }
-        }
-    }
-
-    // LayerMask를 멀티 셀렉트로 보여주는 확장 유틸
-    public static class EditorGUILayoutLayerMask
-    {
-        /// <summary>
-        /// Unity가 기본 제공하지 않는 LayerMask용 GUI를 간단히 만들어 제공합니다 (MaskField 기반).
-        /// </summary>
-        public static LayerMask LayerFieldMask(GUIContent label, LayerMask selected)
-        {
-            var layers = Enumerable.Range(0, 32)
-                .Select(i => new { index = i, name = LayerMask.LayerToName(i) })
-                .Where(x => !string.IsNullOrEmpty(x.name))
-                .ToArray();
-
-            var names = layers.Select(l => l.name).ToArray();
-            var indices = layers.Select(l => l.index).ToArray();
-
-            int mask = 0; // UI용 인덱스 기반 임시 마스크
-            for (int i = 0; i < indices.Length; i++)
-            {
-                if (((1 << indices[i]) & selected.value) != 0)
-                    mask |= 1 << i;
-            }
-
-            int newMask = EditorGUILayout.MaskField(label, mask, names);
-
-            int result = 0;
-            for (int i = 0; i < indices.Length; i++)
-            {
-                if ((newMask & (1 << i)) == 0) continue;
-                result |= 1 << indices[i];
-            }
-            selected.value = result;
-            return selected;
         }
     }
 }

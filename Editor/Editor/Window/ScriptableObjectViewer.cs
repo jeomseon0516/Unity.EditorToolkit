@@ -47,8 +47,6 @@ namespace Jeomseon.Editor.Window
 
         protected void CreateGUI()
         {
-            Debug.Log("Create GUI!");
-
             VisualElement root = rootVisualElement;
             Toolbar toolbar = new()
             {
