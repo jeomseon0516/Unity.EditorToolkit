@@ -1,5 +1,21 @@
 # 변경 기록
 
+## [Unreleased]
+
+## [0.5.0] - 2026-08-10
+
+- **(Breaking)** GridTileSystem에만 사용되던 `SceneViewInnerWindow`를 제거했습니다. 소비 패키지는
+  Unity `Overlay` API로 직접 구현하는 책임을 갖습니다(`Jeomseon.Unity.GridTileSystem`은
+  `HexTileOptionOverlay`로 이전 완료).
+- `IconCreator`를 IMGUI `OnGUI()`에서 UI Toolkit `CreateGUI()`로 이전했습니다. Icon Sources는
+  `ReorderableList`(IMGUI) 대신 `ListView`(reorderable, add/remove footer)로 교체했고,
+  용량 초과 시 추가를 막던 기존 제약은 `itemsAdded` 콜백으로 재구현했습니다. 픽셀 연산·저장
+  로직(`CreateAndSaveAtlas`/`BuildSpriteRects`/`GenerateTmpSpriteAsset`/`BuildPreviewAtlas`)은
+  변경하지 않았습니다. "Create Icon" 버튼은 미리보기 텍스처가 없으면 비활성화되도록
+  개선했습니다(기존은 클릭해도 조용히 아무 동작을 하지 않았습니다).
+- `IconCreator` 입력 변경과 창 종료 시 Preview 텍스처를 즉시 해제하고, 유효한 Sprite가 없으면
+  Preview 생성을 비활성화하도록 수명·입력 검증을 보강했습니다.
+
 ## [0.4.0] - 2026-08-10
 
 - **(Breaking)** 책임 불명확 grab-bag이던 `IMGUIHelper`(구 `EditorGUIHelper`)를 제거했습니다.

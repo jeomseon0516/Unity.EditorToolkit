@@ -7,8 +7,9 @@ and `LoadableScriptableObjectDrawer` were migrated to the UI Toolkit
 (`CreateGUI()`/`CreatePropertyGUI()`) model. The former `IMGUIHelper`, whose
 responsibilities had become an unclear grab-bag, was removed; the layout helpers still
 in active use were split out into `EditorGUILayoutActions` and `GUIStyleTexture` with
-clearer names and ownership. `IconCreator` and SceneView-based UI remain future
-migration targets.
+clearer names and ownership. `IconCreator` now uses `CreateGUI()` and `ListView`.
+The generic SceneView IMGUI window was removed, and consumers now own their native
+Unity `Overlay` implementations.
 
 ## Icon Creator
 
