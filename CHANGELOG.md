@@ -1,6 +1,26 @@
 # 변경 기록
 
-## [Unreleased]
+## [0.4.0] - 2026-08-10
+
+- **(Breaking)** 책임 불명확 grab-bag이던 `IMGUIHelper`(구 `EditorGUIHelper`)를 제거했습니다.
+  실사용 중이던 `ActionEditorVerticalBox`/`ActionEditorVertical`은 `Jeomseon.Editor.GUI.EditorGUILayoutActions`로,
+  `GetTexture2D`는 `Jeomseon.Editor.GUI.GUIStyleTexture`로 이름과 책임을 분리해 이전했습니다.
+  `ActionEditorVerticalBox`의 `VerticalScope` 즉시 Dispose 버그도 함께 수정했습니다. 이 개명·이동으로
+  깨져 있던 `Jeomseon.Unity.UI`의 크로스 패키지 참조도 함께 복구했습니다.
+- `ScriptableObjectScrollView`의 선택 강조색이 Unity 6000.5에서 obsolete된
+  `ITextSelection.selectionColor`를 사용하던 것을 USS 커스텀 프로퍼티(`--unity-selection-color`)
+  기반 `customStyle.TryGetValue`로 교체했습니다. `#3E3E3E` 하드코딩 3중 중복도 상수로 통합했습니다.
+- `ToggleEnumerator<T>.SelectEnumeratedToggles`가 데이터 소스 미설정 시 `NullReferenceException`을
+  던지던 결함을 방어 처리했습니다.
+- `IconCreator.OnGUI()`(220줄)를 `CreateAndSaveAtlas`/`BuildSpriteRects`/`GenerateTmpSpriteAsset`/
+  `BuildPreviewAtlas`로 나눴습니다(동작 변경 없음). `IconCreator`가 Unity Sprite Atlas 시스템과
+  다른 목적(TMP 인라인 스프라이트용 고정 격자 아틀라스)임을 클래스 문서와 README에 명시했습니다.
+- `BulkComponentRemoverWindow`의 반복되던 Toggle 생성·바인딩 코드를 `AddBoundToggle` 헬퍼로 통합했습니다.
+- enum 값, `protected`/`public` 필드, 로컬 함수·메서드 명명을 C# 관례(PascalCase)에 맞게 정리했습니다.
+- `Samples~/BasicUsage`를 추가했습니다: `EditorToolkitSample`(EditorWindow)이 `EditorGUILayoutActions`,
+  `GUIStyleTexture`, `ToggleEnumerator<T>`, `EditorDropdownController<T>`, `EditorTypeDiscovery`,
+  `SerializedPropertyExtensions.GetPropertyType()`를 시연·검증합니다. `IconCreator` 검증용으로
+  128x128 샘플 스프라이트 4개와 이를 참조하는 `SampleIconCreatorPreset`도 함께 포함했습니다.
 
 - `IconCreatorPreset`(`ScriptableObject`, `Create > Jeomseon > Icon Creator Preset`)을 추가해
   atlas 크기·Divide Count·importer 설정(`TextureImporterType`, `SpriteImportMode`)·

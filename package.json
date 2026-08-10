@@ -1,6 +1,6 @@
 {
   "name": "com.jeomseon.unity.editor-toolkit",
-  "version": "0.3.3",
+  "version": "0.4.0",
   "displayName": "Jeomseon Unity Editor Toolkit",
   "description": "Shared editor APIs, editor windows, and ScriptableObject authoring tools.",
   "unity": "6000.5",
@@ -23,5 +23,12 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/jeomseon0516/Unity.EditorToolkit.git"
-  }
+  },
+  "samples": [
+    {
+      "displayName": "Basic Usage",
+      "description": "패키지 핵심 API를 확인하는 최소 사용 예제입니다.",
+      "path": "Samples~/BasicUsage"
+    }
+  ]
 }

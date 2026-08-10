@@ -5,6 +5,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Jeomseon.Collections;
+using UnityEditor.UIElements;
 
 namespace Jeomseon.Editor.Window
 {
@@ -12,26 +13,26 @@ namespace Jeomseon.Editor.Window
     {
         private enum NameChangeState : byte
         {
-            ONLY_CURRENT,
-            CHILD_ALL
+            OnlyCurrent,
+            ChildAll
         }
 
         private enum ChangeMode : byte
         {
-            REPLACE,
-            ADD
+            Replace,
+            Add
         }
 
         private enum AffixState : byte
         {
-            PREFIX,
-            SUFFIX
+            Prefix,
+            Suffix
         }
 
         private GameObject _targetObject;
-        private ChangeMode _changeMode = ChangeMode.REPLACE;
-        private NameChangeState _nameChangeState = NameChangeState.ONLY_CURRENT;
-        private AffixState _affixState = AffixState.PREFIX;
+        private ChangeMode _changeMode = ChangeMode.Replace;
+        private NameChangeState _nameChangeState = NameChangeState.OnlyCurrent;
+        private AffixState _affixState = AffixState.Prefix;
         private string _replaceTargetText = string.Empty;
         private string _replaceChangedTargetText = string.Empty;
         private string _affixText = string.Empty;
@@ -70,8 +71,13 @@ namespace Jeomseon.Editor.Window
             _content = new VisualElement();
             root.Add(_content);
 
-            var options = new VisualElement();
-            options.style.flexDirection = FlexDirection.Row;
+            var options = new VisualElement
+            {
+                style =
+                {
+                    flexDirection = FlexDirection.Row
+                }
+            };
 
             var modeField = new EnumField("Change Mode", _changeMode);
             modeField.style.flexGrow = 1;
@@ -101,8 +107,10 @@ namespace Jeomseon.Editor.Window
         {
             var content = new VisualElement();
 
-            var targetField = new TextField("Target Text");
-            targetField.value = _replaceTargetText;
+            var targetField = new TextField("Target Text")
+            {
+                value = _replaceTargetText
+            };
             targetField.RegisterValueChangedCallback(evt => _replaceTargetText = evt.newValue);
             content.Add(targetField);
 
@@ -149,10 +157,10 @@ namespace Jeomseon.Editor.Window
 
         private void RefreshModeContent()
         {
-            _replaceContent.style.display = _changeMode == ChangeMode.REPLACE
+            _replaceContent.style.display = _changeMode == ChangeMode.Replace
                 ? DisplayStyle.Flex
                 : DisplayStyle.None;
-            _addContent.style.display = _changeMode == ChangeMode.ADD
+            _addContent.style.display = _changeMode == ChangeMode.Add
                 ? DisplayStyle.Flex
                 : DisplayStyle.None;
         }
@@ -170,10 +178,10 @@ namespace Jeomseon.Editor.Window
 
             switch (_affixState)
             {
-                case AffixState.PREFIX:
+                case AffixState.Prefix:
                     ApplyToTarget(go => go.name = $"{_affixText}_{go.name}");
                     break;
-                case AffixState.SUFFIX:
+                case AffixState.Suffix:
                     ApplyToTarget(go => go.name += $"_{_affixText}");
                     break;
             }
@@ -183,10 +191,10 @@ namespace Jeomseon.Editor.Window
         {
             switch (_nameChangeState)
             {
-                case NameChangeState.ONLY_CURRENT:
+                case NameChangeState.OnlyCurrent:
                     action?.Invoke(_targetObject);
                     break;
-                case NameChangeState.CHILD_ALL:
+                case NameChangeState.ChildAll:
                     if (action is null) return;
                     _targetObject
                         .GetComponentsInChildren<Transform>()

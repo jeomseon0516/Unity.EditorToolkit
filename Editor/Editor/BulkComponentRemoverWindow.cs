@@ -42,10 +42,10 @@ namespace Jeomseon.Editor
         [Serializable]
         private class Match
         {
-            public GameObject go;
-            public Component component; // Missing Script일 때 null
-            public bool isMissing;
-            public override string ToString() => isMissing ? "[Missing Script]" : (component ? component.GetType().Name : "(null)");
+            public GameObject Go;
+            public Component Component; // Missing Script일 때 null
+            public bool IsMissing;
+            public override string ToString() => IsMissing ? "[Missing Script]" : (this.Component ? this.Component.GetType().Name : "(null)");
         }
 
         private readonly List<Match> _matches = new();
@@ -101,23 +101,29 @@ namespace Jeomseon.Editor
             InvalidatePreview();
         }
 
+        private static void AddBoundToggle(VisualElement section, string label, bool initialValue, string tooltip, Action<bool> onChanged)
+        {
+            var toggle = new Toggle(label)
+            {
+                value = initialValue,
+                tooltip = tooltip
+            };
+            toggle.RegisterValueChangedCallback(evt => onChanged(evt.newValue));
+            section.Add(toggle);
+        }
+
         private VisualElement BuildModeSection()
         {
             var section = new VisualElement();
             section.Add(new Label("Mode") { style = { unityFontStyleAndWeight = FontStyle.Bold } });
 
-            var missingOnlyToggle = new Toggle("Missing Script Cleanup Only")
-            {
-                value = _missingOnly,
-                tooltip = "Missing Script만 제거합니다 (타입 지정 무시)"
-            };
-            missingOnlyToggle.RegisterValueChangedCallback(evt =>
-            {
-                _missingOnly = evt.newValue;
-                RefreshTargetComponentEnabled();
-                InvalidatePreview();
-            });
-            section.Add(missingOnlyToggle);
+            AddBoundToggle(section, "Missing Script Cleanup Only", _missingOnly,
+                "Missing Script만 제거합니다 (타입 지정 무시)", value =>
+                {
+                    _missingOnly = value;
+                    RefreshTargetComponentEnabled();
+                    InvalidatePreview();
+                });
             return section;
         }
 
@@ -192,42 +198,27 @@ namespace Jeomseon.Editor
             var section = new VisualElement();
             section.Add(new Label("Scope & Filters") { style = { unityFontStyleAndWeight = FontStyle.Bold } });
 
-            var includeInactiveToggle = new Toggle("Include Inactive")
-            {
-                value = _includeInactive,
-                tooltip = "비활성 오브젝트 포함"
-            };
-            includeInactiveToggle.RegisterValueChangedCallback(evt =>
-            {
-                _includeInactive = evt.newValue;
-                InvalidatePreview();
-            });
-            section.Add(includeInactiveToggle);
+            AddBoundToggle(section, "Include Inactive", _includeInactive,
+                "비활성 오브젝트 포함", value =>
+                {
+                    _includeInactive = value;
+                    InvalidatePreview();
+                });
 
-            var searchChildrenToggle = new Toggle("Search Children")
-            {
-                value = _searchInSelectionChildren,
-                tooltip = "선택 오브젝트의 자식 포함"
-            };
-            searchChildrenToggle.RegisterValueChangedCallback(evt =>
-            {
-                _searchInSelectionChildren = evt.newValue;
-                InvalidatePreview();
-            });
-            section.Add(searchChildrenToggle);
+            AddBoundToggle(section, "Search Children", _searchInSelectionChildren,
+                "선택 오브젝트의 자식 포함", value =>
+                {
+                    _searchInSelectionChildren = value;
+                    InvalidatePreview();
+                });
 
-            var filterByLayerToggle = new Toggle("Filter by Layer")
-            {
-                value = _filterByLayer,
-                tooltip = "특정 레이어만 대상"
-            };
-            filterByLayerToggle.RegisterValueChangedCallback(evt =>
-            {
-                _filterByLayer = evt.newValue;
-                _layerMaskRow.style.display = _filterByLayer ? DisplayStyle.Flex : DisplayStyle.None;
-                InvalidatePreview();
-            });
-            section.Add(filterByLayerToggle);
+            AddBoundToggle(section, "Filter by Layer", _filterByLayer,
+                "특정 레이어만 대상", value =>
+                {
+                    _filterByLayer = value;
+                    _layerMaskRow.style.display = _filterByLayer ? DisplayStyle.Flex : DisplayStyle.None;
+                    InvalidatePreview();
+                });
 
             _layerMaskRow = new VisualElement
             {
@@ -242,18 +233,13 @@ namespace Jeomseon.Editor
             _layerMaskRow.Add(layerMaskField);
             section.Add(_layerMaskRow);
 
-            var filterByTagToggle = new Toggle("Filter by Tag")
-            {
-                value = _filterByTag,
-                tooltip = "특정 태그만 대상"
-            };
-            filterByTagToggle.RegisterValueChangedCallback(evt =>
-            {
-                _filterByTag = evt.newValue;
-                _tagRow.style.display = _filterByTag ? DisplayStyle.Flex : DisplayStyle.None;
-                InvalidatePreview();
-            });
-            section.Add(filterByTagToggle);
+            AddBoundToggle(section, "Filter by Tag", _filterByTag,
+                "특정 태그만 대상", value =>
+                {
+                    _filterByTag = value;
+                    _tagRow.style.display = _filterByTag ? DisplayStyle.Flex : DisplayStyle.None;
+                    InvalidatePreview();
+                });
 
             _tagRow = new VisualElement
             {
@@ -424,12 +410,12 @@ namespace Jeomseon.Editor
             {
                 var row = new VisualElement { style = { flexDirection = FlexDirection.Row } };
 
-                var goField = new ObjectField { objectType = typeof(GameObject), value = match.go, style = { flexGrow = 1 } };
+                var goField = new ObjectField { objectType = typeof(GameObject), value = match.Go, style = { flexGrow = 1 } };
                 row.Add(goField);
 
                 row.Add(new Label(match.ToString()) { style = { width = 200 } });
 
-                var componentField = new ObjectField { objectType = typeof(Component), value = match.component, style = { flexGrow = 1 } };
+                var componentField = new ObjectField { objectType = typeof(Component), value = match.Component, style = { flexGrow = 1 } };
                 componentField.SetEnabled(false);
                 row.Add(componentField);
 
@@ -583,7 +569,7 @@ namespace Jeomseon.Editor
                         if (component == null)
                         {
                             _matches.Add(new Match
-                                { go = go, component = null, isMissing = true });
+                                { Go = go, Component = null, IsMissing = true });
                         }
                     }
                 }
@@ -595,7 +581,7 @@ namespace Jeomseon.Editor
                         if (component == null) continue;
 
                         _matches.Add(new Match
-                            { go = go, component = component, isMissing = false });
+                            { Go = go, Component = component, IsMissing = false });
                     }
                 }
             }
@@ -635,15 +621,15 @@ namespace Jeomseon.Editor
             Undo.SetCurrentGroupName(title);
 
             HashSet<Scene> affectedScenes = _matches
-                .Where(match => match?.go != null && match.go.scene.IsValid())
-                .Select(match => match.go.scene)
+                .Where(match => match?.Go != null && match.Go.scene.IsValid())
+                .Select(match => match.Go.scene)
                 .ToHashSet();
 
             int removed = 0;
             if (_missingOnly)
             {
                 var perGo = _matches
-                    .Select(m => m.go)
+                    .Select(m => m.Go)
                     .Distinct();
 
                 foreach (var go in perGo)
@@ -659,9 +645,9 @@ namespace Jeomseon.Editor
             }
             else
             {
-                foreach (var m in _matches.Where(m => m != null && m.component != null))
+                foreach (var m in _matches.Where(m => m != null && m.Component != null))
                 {
-                    Undo.DestroyObjectImmediate(m.component);
+                    Undo.DestroyObjectImmediate(m.Component);
                     removed++;
                 }
             }

@@ -85,9 +85,9 @@ namespace Jeomseon.Editor.Window
 
             foreach ((ToolbarButton, ScriptableObjectScrollView) buttonOption in GetTargetScriptableObjectType()
                 .Where(option => option.ScriptableObjectType.IsSubclassOf(typeof(ScriptableObject)))
-                .Select(getButtonOption))
+                .Select(GetButtonOption))
             {
-                setToolbarButton(buttonOption.Item1);
+                SetToolbarButton(buttonOption.Item1);
                 toolbar.Add(buttonOption.Item1);
                 buttonOption.Item2.name = "SOScrollView";
                 buttonOption.Item1.clicked += () =>
@@ -123,7 +123,7 @@ namespace Jeomseon.Editor.Window
             root.Add(toolbar);
             root.Add(contentElement);
 
-            static (ToolbarButton, ScriptableObjectScrollView) getButtonOption(ScrollBuildOption buildOption)
+            static (ToolbarButton, ScriptableObjectScrollView) GetButtonOption(ScrollBuildOption buildOption)
             {
                 (ToolbarButton, ScriptableObjectScrollView) buttonOption;
 
@@ -142,7 +142,7 @@ namespace Jeomseon.Editor.Window
                 return buttonOption;
             }
 
-            void setToolbarButton(ToolbarButton button)
+            void SetToolbarButton(ToolbarButton button)
             {
                 button.style.backgroundColor = _originalColor;
                 button.style.unityTextAlign = TextAnchor.MiddleCenter;

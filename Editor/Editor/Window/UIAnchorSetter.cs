@@ -1,9 +1,11 @@
 #if UNITY_EDITOR
 using System.Linq;
 using UnityEditor;
+using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.UIElements;
+using Button = UnityEngine.UIElements.Button;
 
 namespace Jeomseon.Editor.Window
 {
@@ -25,9 +27,14 @@ namespace Jeomseon.Editor.Window
             root.style.paddingTop = 8;
             root.style.paddingBottom = 8;
 
-            var title = new Label("Anchor Setter Tool");
-            title.style.unityFontStyleAndWeight = FontStyle.Bold;
-            root.Add(title);
+            var toolTitle = new Label("Anchor Setter Tool")
+            {
+                style =
+                {
+                    unityFontStyleAndWeight = FontStyle.Bold
+                }
+            };
+            root.Add(toolTitle);
 
             var objectField = new ObjectField("UI Object")
             {
@@ -49,14 +56,16 @@ namespace Jeomseon.Editor.Window
             if (!_selectedUI)
                 return;
 
-            var rects = _selectedUI
+            RectTransform[] rects = _selectedUI
                 .GetComponentsInChildren<RectTransform>(true)
                 .Where(rt =>
                     !rt.GetComponent<Canvas>() &&
                     (!rt.parent || !rt.parent.GetComponent<LayoutGroup>()))
                 .ToArray();
 
-            Undo.RecordObjects(rects, "Set UI Anchors");
+            Undo.RecordObjects(rects
+                .Cast<Object>()
+                .ToArray(), "Set UI Anchors");
 
             foreach (RectTransform rectTransform in rects)
             {

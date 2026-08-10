@@ -2,10 +2,26 @@
 
 ## UI Toolkit migration status
 
-As part of P2-01, `UIAnchorSetter` and `ObjectNamingChanger` were migrated to the
-UI Toolkit `CreateGUI()` model. The existing `IMGUIHelper` remains for compatibility;
-`BulkComponentRemoverWindow`, `LoadableScriptableObjectDrawer`, and SceneView-based UI
-remain future migration targets.
+As part of P2-01, `UIAnchorSetter`, `ObjectNamingChanger`, `BulkComponentRemoverWindow`,
+and `LoadableScriptableObjectDrawer` were migrated to the UI Toolkit
+(`CreateGUI()`/`CreatePropertyGUI()`) model. The former `IMGUIHelper`, whose
+responsibilities had become an unclear grab-bag, was removed; the layout helpers still
+in active use were split out into `EditorGUILayoutActions` and `GUIStyleTexture` with
+clearer names and ownership. `IconCreator` and SceneView-based UI remain future
+migration targets.
+
+## Icon Creator
+
+`IconCreator` (`Jeomseon/Icon Creator`) combines several individual icon sprites into a
+fixed-grid texture and, from that, generates a TextMeshPro `TMP_SpriteAsset` (for inline
+sprites). Unity's Sprite Atlas system (`com.unity.2d.sprite`) is a separate optimization
+tool that automatically packs scattered sprites at build/runtime to reduce draw calls; it
+has no notion of fixed-grid layout and does not produce a `TMP_SpriteAsset`. TextMeshPro's
+own Sprite Asset Creator likewise assumes an atlas and sprite metadata already exist, so
+neither Unity nor TMP automates the step of combining N loose source icons into a grid.
+`IconCreatorPreset` (a `ScriptableObject`) lets you save and reuse the size, divide count,
+and default icon list. `Samples~/BasicUsage` includes 4 verification sample sprites and a
+matching preset.
 
 ## SerializedProperty utilities
 
