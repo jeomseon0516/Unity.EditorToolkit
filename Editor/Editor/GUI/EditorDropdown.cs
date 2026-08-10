@@ -19,7 +19,7 @@ namespace Jeomseon.Editor.GUI
 
         public void Dropdown(Action<T> onChangeValue)
         {
-            IMGUIHelper.ActionEditorHorizontal(() =>
+            using (new EditorGUILayout.HorizontalScope())
             {
                 EditorGUILayout.LabelField(_label, GUILayout.ExpandWidth(true));
                 if (EditorGUILayout.DropdownButton(
@@ -54,7 +54,7 @@ namespace Jeomseon.Editor.GUI
 
                     menu.ShowAsContext();
                 }
-            });
+            }
         }
 
         public void SetSelectedItem(T value)

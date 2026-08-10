@@ -13,11 +13,11 @@ namespace Jeomseon.Editor
     {
         static PreviewSceneCleaner()
         {
-            AssemblyReloadEvents.beforeAssemblyReload += closeAllPreviewScenes;
-            EditorApplication.quitting += closeAllPreviewScenes;
+            AssemblyReloadEvents.beforeAssemblyReload += CloseAllPreviewScenes;
+            EditorApplication.quitting += CloseAllPreviewScenes;
         }
         
-        private static void closeAllPreviewScenes()
+        private static void CloseAllPreviewScenes()
         {
             int sceneCount = SceneManager.sceneCount;
             for (int i = 0; i < sceneCount; i++)

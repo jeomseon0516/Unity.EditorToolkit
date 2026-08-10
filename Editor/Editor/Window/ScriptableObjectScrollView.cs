@@ -1,7 +1,6 @@
 #if UNITY_EDITOR
 using System;
 using System.Linq;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -12,6 +11,11 @@ namespace Jeomseon.Editor.Window
 {
     internal class ScriptableObjectScrollView : VisualElement
     {
+        private static readonly CustomStyleProperty<Color> SelectionColorProperty = new("--unity-selection-color");
+        private static readonly Color UnselectedColor = ColorUtility.TryParseHtmlString("#3E3E3E", out Color parsedUnselectedColor)
+            ? parsedUnselectedColor
+            : Color.gray;
+
         public event Action<ScriptableObjectButton> OnSelectObject;
 
         public ScrollView View { get; } = new()
@@ -25,18 +29,22 @@ namespace Jeomseon.Editor.Window
         };
 
         public IReadOnlyList<ScriptableObjectButton> ScriptableObjects => _scriptableObjects;
-        protected readonly List<ScriptableObjectButton> _scriptableObjects = new();
+        private readonly List<ScriptableObjectButton> _scriptableObjects = new();
 
-        protected ScriptableObjectButton _selectedObject = null;
+        private ScriptableObjectButton _selectedObject;
 
         internal virtual void OnEnable()
         {
-            if (_selectedObject is not null)
-            {
-                _selectedObject.style.backgroundColor = ColorUtility.TryParseHtmlString("#3E3E3E", out Color color) ? color : Color.gray;
-            }
-
+            ResetToUnselected(_selectedObject);
             _selectedObject = null;
+        }
+
+        private static void ResetToUnselected(ScriptableObjectButton button)
+        {
+            if (button is not null)
+            {
+                button.style.backgroundColor = UnselectedColor;
+            }
         }
 
         internal virtual void OnDisable()
@@ -52,13 +60,12 @@ namespace Jeomseon.Editor.Window
         {
             OnSelectObject += selectedObject =>
             {
-                if (_selectedObject is not null)
-                {
-                    _selectedObject.style.backgroundColor = ColorUtility.TryParseHtmlString("#3E3E3E", out Color color) ? color : Color.gray;
-                }
+                ResetToUnselected(_selectedObject);
 
                 _selectedObject = selectedObject;
-                _selectedObject.style.backgroundColor = _selectedObject.selection.selectionColor;
+                _selectedObject.style.backgroundColor = _selectedObject.customStyle.TryGetValue(SelectionColorProperty, out Color selectionColor)
+                    ? selectionColor
+                    : Color.gray;
             };
 
             VisualElement header = CreateHeader();
@@ -96,7 +103,7 @@ namespace Jeomseon.Editor.Window
             soArray.ForEach(View.Add);
             _scriptableObjects.AddRange(soArray);
             
-            sortElements();
+            SortElements();
         }
 
         public void AddSo(ScriptableObject obj)
@@ -105,7 +112,7 @@ namespace Jeomseon.Editor.Window
             View.Add(button);
             _scriptableObjects.Add(button);
             
-            sortElements();
+            SortElements();
         }
 
         public void RemoveSo(ScriptableObject obj)
@@ -151,10 +158,10 @@ namespace Jeomseon.Editor.Window
                     .ForEach(View.Add);
             }
             
-            sortElements();
+            SortElements();
         }
 
-        private void sortElements()
+        private void SortElements()
         {
             View.Sort((a, b) => string.CompareOrdinal(a.name, b.name));
         }
@@ -186,7 +193,7 @@ namespace Jeomseon.Editor.Window
                     borderBottomRightRadius = 0,
                     borderTopRightRadius = 0,
                     whiteSpace = WhiteSpace.Normal,
-                    backgroundColor = ColorUtility.TryParseHtmlString("#3E3E3E", out Color color) ? color : Color.gray
+                    backgroundColor = UnselectedColor
                 },
                 text = so.name,
             };

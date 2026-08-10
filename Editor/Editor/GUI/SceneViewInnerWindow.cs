@@ -12,8 +12,8 @@ namespace Jeomseon.Editor.GUI
 
     public sealed class SceneViewInnerWindow<T> where T : Editor
     {
-        private const float WIDTH_MIN = 100f;
-        private const float HEIGHT_MIN = 200f;
+        private const float WidthMin = 100f;
+        private const float HeightMin = 200f;
 
         public bool IsUse { get; private set; } = false;
 
@@ -58,9 +58,9 @@ namespace Jeomseon.Editor.GUI
                 _windowStyle.stretchHeight = true;
             }
 
-            _windowRect = GUILayout.Window(0, _windowRect, id => drawWindowContents(id, call), "Tile Option", _windowStyle);
+            _windowRect = GUILayout.Window(0, _windowRect, id => DrawWindowContents(id, call), "Tile Option", _windowStyle);
 
-            handleWindowDragAndResize();
+            HandleWindowDragAndResize();
 
             if (_windowRect.x < 0)
             {
@@ -85,13 +85,13 @@ namespace Jeomseon.Editor.GUI
             Handles.EndGUI();
         }
 
-        private void drawWindowContents(int windowId, Action<int> call)
+        private void DrawWindowContents(int windowId, Action<int> call)
         {
             call?.Invoke(windowId);
             GUI.DragWindow(new(0, 0, _windowRect.width, 20)); // 상단 20px 영역을 드래그 가능하도록 설정
         }
 
-        private void handleWindowDragAndResize()
+        private void HandleWindowDragAndResize()
         {
             Event currentEvent = Event.current;
             Vector2 mousePosition = currentEvent.mousePosition;
@@ -106,14 +106,14 @@ namespace Jeomseon.Editor.GUI
             Rect topArea = new(_windowRect.xMin + 5, _windowRect.yMin - 5, _windowRect.width - 10, 10);
             Rect rightTopArea = new(_windowRect.xMax - 5, _windowRect.yMin - 5, 10, 10);
 
-            setCursor(leftTopArea, MouseCursor.ResizeUpLeft);
-            setCursor(leftArea, MouseCursor.ResizeHorizontal);
-            setCursor(leftBottomArea, MouseCursor.ResizeUpRight);
-            setCursor(bottomArea, MouseCursor.ResizeVertical);
-            setCursor(rightBottomArea, MouseCursor.ResizeUpLeft);
-            setCursor(rightArea, MouseCursor.ResizeHorizontal);
-            setCursor(topArea, MouseCursor.ResizeVertical);
-            setCursor(rightTopArea, MouseCursor.ResizeUpRight);
+            SetCursor(leftTopArea, MouseCursor.ResizeUpLeft);
+            SetCursor(leftArea, MouseCursor.ResizeHorizontal);
+            SetCursor(leftBottomArea, MouseCursor.ResizeUpRight);
+            SetCursor(bottomArea, MouseCursor.ResizeVertical);
+            SetCursor(rightBottomArea, MouseCursor.ResizeUpLeft);
+            SetCursor(rightArea, MouseCursor.ResizeHorizontal);
+            SetCursor(topArea, MouseCursor.ResizeVertical);
+            SetCursor(rightTopArea, MouseCursor.ResizeUpRight);
 
             if (currentEvent.button == 0)
             {
@@ -121,58 +121,58 @@ namespace Jeomseon.Editor.GUI
                 {
                     case EventType.MouseDown:
                         {
-                            setUseByRectContains();
+                            SetUseByRectContains();
 
                             if (leftTopArea.Contains(mousePosition))
                             {
                                 _isResizingLeft = true;
                                 _isResizingTop = true;
-                                setUse();
+                                SetUse();
                             }
 
                             if (leftArea.Contains(mousePosition))
                             {
                                 _isResizingLeft = true;
-                                setUse();
+                                SetUse();
                             }
 
                             if (leftBottomArea.Contains(mousePosition))
                             {
                                 _isResizingLeft = true;
                                 _isResizingBottom = true;
-                                setUse();
+                                SetUse();
                             }
 
                             if (bottomArea.Contains(mousePosition))
                             {
                                 _isResizingBottom = true;
-                                setUse();
+                                SetUse();
                             }
 
                             if (rightBottomArea.Contains(mousePosition))
                             {
                                 _isResizingBottom = true;
                                 _isResizingRight = true;
-                                setUse();
+                                SetUse();
                             }
 
                             if (rightArea.Contains(mousePosition))
                             {
                                 _isResizingRight = true;
-                                setUse();
+                                SetUse();
                             }
 
                             if (topArea.Contains(mousePosition))
                             {
                                 _isResizingTop = true;
-                                setUse();
+                                SetUse();
                             }
 
                             if (rightTopArea.Contains(mousePosition))
                             {
                                 _isResizingRight = true;
                                 _isResizingTop = true;
-                                setUse();
+                                SetUse();
                             }
                             break;
                         }
@@ -191,12 +191,12 @@ namespace Jeomseon.Editor.GUI
                                     _windowRect.x = SceneView.currentDrawingSceneView.cameraViewport.xMin;
                                 }
 
-                                if (_windowRect.width < WIDTH_MIN)
+                                if (_windowRect.width < WidthMin)
                                 {
-                                    _windowRect.width = WIDTH_MIN;
+                                    _windowRect.width = WidthMin;
                                 }
 
-                                setUse();
+                                SetUse();
                             }
 
                             if (_isResizingRight)
@@ -208,12 +208,12 @@ namespace Jeomseon.Editor.GUI
                                     _windowRect.width = SceneView.currentDrawingSceneView.cameraViewport.xMax - _windowRect.x;
                                 }
 
-                                if (_windowRect.width < WIDTH_MIN)
+                                if (_windowRect.width < WidthMin)
                                 {
-                                    _windowRect.width = WIDTH_MIN;
+                                    _windowRect.width = WidthMin;
                                 }
 
-                                setUse();
+                                SetUse();
                             }
 
                             if (_isResizingTop)
@@ -229,12 +229,12 @@ namespace Jeomseon.Editor.GUI
                                     _windowRect.y = SceneView.currentDrawingSceneView.cameraViewport.yMin;
                                 }
 
-                                if (_windowRect.height < HEIGHT_MIN)
+                                if (_windowRect.height < HeightMin)
                                 {
-                                    _windowRect.height = HEIGHT_MIN;
+                                    _windowRect.height = HeightMin;
                                 }
 
-                                setUse();
+                                SetUse();
                             }
 
                             if (_isResizingBottom)
@@ -246,24 +246,24 @@ namespace Jeomseon.Editor.GUI
                                     _windowRect.height = SceneView.currentDrawingSceneView.cameraViewport.yMax - _windowRect.y;
                                 }
 
-                                if (_windowRect.height < HEIGHT_MIN)
+                                if (_windowRect.height < HeightMin)
                                 {
-                                    _windowRect.height = HEIGHT_MIN;
+                                    _windowRect.height = HeightMin;
                                 }
 
-                                setUse();
+                                SetUse();
                             }
                             break;
                         }
                     case EventType.MouseUp:
-                        setUseByRectContains();
+                        SetUseByRectContains();
                         _isResizingLeft = false;
                         _isResizingRight = false;
                         _isResizingTop = false;
                         _isResizingBottom = false;
                         break;
 
-                        void setUseByRectContains()
+                        void SetUseByRectContains()
                         {
                             if (!_windowRect.Contains(mousePosition) &&
                                 !leftTopArea.Contains(mousePosition) &&
@@ -275,18 +275,18 @@ namespace Jeomseon.Editor.GUI
                                 !topArea.Contains(mousePosition) &&
                                 !rightTopArea.Contains(mousePosition)) return;
 
-                            setUse();
+                            SetUse();
                         }
                 }
             }
 
-            void setUse()
+            void SetUse()
             {
                 currentEvent.Use();
                 IsUse = true;
             }
 
-            void setCursor(in Rect rect, in MouseCursor cursor)
+            void SetCursor(in Rect rect, in MouseCursor cursor)
             {
                 EditorGUIUtility.AddCursorRect(new(rect.x, rect.y + toolbarHeight, rect.width, rect.height), cursor);
             }

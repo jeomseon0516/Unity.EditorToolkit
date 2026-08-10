@@ -19,7 +19,7 @@ namespace Jeomseon.Editor.Window
 
             if (_editor == null || _currentTarget != target)
             {
-                createEditor(target);
+                CreateInspectorEditor(target);
             }
 
             if (_editor != null)
@@ -28,9 +28,9 @@ namespace Jeomseon.Editor.Window
             }
         }
 
-        private void createEditor(Object target)
+        private void CreateInspectorEditor(Object target)
         {
-            destroyEditor();
+            DestroyInspectorEditor();
 
             _currentTarget = target;
             _editor = Editor.CreateEditor(target);
@@ -38,10 +38,10 @@ namespace Jeomseon.Editor.Window
 
         public void OnDisable()
         {
-            destroyEditor();
+            DestroyInspectorEditor();
         }
 
-        private void destroyEditor()
+        private void DestroyInspectorEditor()
         {
             if (_editor != null)
             {
