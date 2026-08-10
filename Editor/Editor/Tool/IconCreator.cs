@@ -1,7 +1,8 @@
 #if UNITY_EDITOR
 using UnityEngine;
+using UnityEngine.UIElements;
 using UnityEditor;
-using UnityEditorInternal;
+using UnityEditor.UIElements;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.U2D.Sprites;
@@ -32,9 +33,17 @@ namespace Jeomseon.Editor.Tool
         private int _divideCount = 4;
 
         private readonly List<Sprite> _iconSources = new();
-        private ReorderableList _reorderableIconSources;
-        private Texture2D _iconTexture = null;
+        private Texture2D _iconTexture;
         private IconCreatorPreset _preset;
+
+        private ObjectField _presetField;
+        private Button _loadPresetButton;
+        private SliderInt _sizeField;
+        private IntegerField _divideCountField;
+        private Button _createIconButton;
+        private Button _previewButton;
+        private Image _iconPreviewImage;
+        private ListView _iconSourcesListView;
 
         private static string LastPresetPrefsKey =>
             $"Jeomseon.EditorToolkit.IconCreator.LastPreset.{PlayerSettings.productGUID}";
@@ -46,57 +55,178 @@ namespace Jeomseon.Editor.Tool
             {
                 _preset = AssetDatabase.LoadAssetAtPath<IconCreatorPreset>(lastPresetPath);
             }
-
-            _reorderableIconSources = new(
-                _iconSources,
-                typeof(Sprite),
-                true,
-                true,
-                true,
-                true)
-            {
-                drawElementCallback = (rect, index, isActive, isFocused) =>
-                {
-                    rect.y += 2;
-                    _iconSources[index] = (Sprite)EditorGUI.ObjectField(
-                        new(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight),
-                        _iconSources[index], typeof(Sprite), false);
-                },
-                onAddCallback = _ =>
-                {
-                    if (_iconSources.Count >= _divideCount * _divideCount) return;
-                    _iconSources.Add(null);
-                },
-                drawHeaderCallback = rect => EditorGUI.LabelField(rect, "Icon Sources")
-            };
         }
 
-        public void OnGUI()
+        private void OnDisable()
         {
-            DrawPresetControls();
+            ReleasePreview();
+        }
 
-            _size = EditorGUILayout.IntSlider(new GUIContent("Size"), _size, 128, 2048);
-            _divideCount = Mathf.Clamp(EditorGUILayout.IntField(new GUIContent("Divide Count"), _divideCount), 1, 32);
+        private void CreateGUI()
+        {
+            VisualElement root = rootVisualElement;
+            root.style.paddingLeft = 8;
+            root.style.paddingRight = 8;
+            root.style.paddingTop = 8;
+            root.style.paddingBottom = 8;
 
-            bool isCreate = GUILayout.Button("Create Icon");
-            EditorGUILayout.Space(EditorGUIUtility.singleLineHeight * 3f);
+            root.Add(BuildPresetControls());
 
+            _sizeField = new SliderInt("Size", 128, 2048) { value = _size };
+            _sizeField.RegisterValueChangedCallback(evt =>
+            {
+                _size = evt.newValue;
+                ReleasePreview();
+            });
+            root.Add(_sizeField);
+
+            _divideCountField = new IntegerField("Divide Count") { value = _divideCount };
+            _divideCountField.RegisterValueChangedCallback(evt =>
+            {
+                _divideCount = Mathf.Clamp(evt.newValue, 1, 32);
+                _divideCountField.SetValueWithoutNotify(_divideCount);
+                EnforceIconSourcesCapacity(_iconSourcesListView, Enumerable.Empty<int>());
+                ReleasePreview();
+            });
+            root.Add(_divideCountField);
+
+            _createIconButton = new Button(OnCreateIconClicked) { text = "Create Icon" };
+            _createIconButton.SetEnabled(false);
+            root.Add(_createIconButton);
+
+            _iconPreviewImage = new Image
+            {
+                style = { height = 128, display = DisplayStyle.None }
+            };
+            root.Add(_iconPreviewImage);
+
+            _iconSourcesListView = BuildIconSourcesListView();
+            root.Add(_iconSourcesListView);
+
+            _previewButton = new Button(OnPreviewClicked) { text = "Preview" };
+            root.Add(_previewButton);
+            UpdatePreviewButtonState();
+        }
+
+        private ListView BuildIconSourcesListView()
+        {
+            var listView = new ListView(_iconSources, 24, MakeIconSourceItem, BindIconSourceItem)
+            {
+                headerTitle = "Icon Sources",
+                showFoldoutHeader = true,
+                showBorder = true,
+                reorderable = true,
+                showAddRemoveFooter = true,
+                style = { flexGrow = 1, minHeight = 150 }
+            };
+
+            listView.itemsAdded += indices => EnforceIconSourcesCapacity(listView, indices);
+            listView.itemsRemoved += _ =>
+            {
+                ReleasePreview();
+                UpdatePreviewButtonState();
+            };
+
+            return listView;
+        }
+
+        private VisualElement MakeIconSourceItem()
+        {
+            var field = new ObjectField { objectType = typeof(Sprite) };
+            field.RegisterValueChangedCallback(evt =>
+            {
+                int index = (int)((ObjectField)evt.target).userData;
+                _iconSources[index] = evt.newValue as Sprite;
+                ReleasePreview();
+                UpdatePreviewButtonState();
+            });
+            return field;
+        }
+
+        private void BindIconSourceItem(VisualElement element, int index)
+        {
+            var field = (ObjectField)element;
+            field.userData = index;
+            field.SetValueWithoutNotify(_iconSources[index]);
+        }
+
+        private void EnforceIconSourcesCapacity(ListView listView, IEnumerable<int> addedIndices)
+        {
+            int capacity = _divideCount * _divideCount;
+            if (_iconSources.Count <= capacity)
+            {
+                return;
+            }
+
+            foreach (int index in addedIndices.OrderByDescending(i => i))
+            {
+                if (_iconSources.Count <= capacity) break;
+
+                if (index < _iconSources.Count)
+                {
+                    _iconSources.RemoveAt(index);
+                }
+            }
+
+            if (_iconSources.Count > capacity)
+            {
+                _iconSources.RemoveRange(capacity, _iconSources.Count - capacity);
+            }
+
+            listView.Rebuild();
+            ReleasePreview();
+            UpdatePreviewButtonState();
+        }
+
+        private void OnCreateIconClicked()
+        {
+            if (!_iconTexture)
+            {
+                return;
+            }
+
+            CreateAndSaveAtlas();
+        }
+
+        private void OnPreviewClicked()
+        {
+            if (!CanBuildAtlas())
+            {
+                return;
+            }
+
+            ReleasePreview();
+            _iconTexture = BuildPreviewAtlas();
+            _iconPreviewImage.image = _iconTexture;
+            _iconPreviewImage.style.display = _iconTexture ? DisplayStyle.Flex : DisplayStyle.None;
+            _createIconButton.SetEnabled(_iconTexture != null);
+        }
+
+        private bool CanBuildAtlas() =>
+            _iconSources.Count is > 0 &&
+            _iconSources.Count <= _divideCount * _divideCount &&
+            _iconSources.All(sprite => sprite);
+
+        private void UpdatePreviewButtonState()
+        {
+            _previewButton?.SetEnabled(CanBuildAtlas());
+        }
+
+        private void ReleasePreview()
+        {
             if (_iconTexture)
             {
-                GUILayout.Label(_iconTexture);
+                DestroyImmediate(_iconTexture);
             }
 
-            _reorderableIconSources.DoLayoutList();
-
-            if (isCreate && _iconTexture)
+            _iconTexture = null;
+            if (_iconPreviewImage is not null)
             {
-                CreateAndSaveAtlas();
+                _iconPreviewImage.image = null;
+                _iconPreviewImage.style.display = DisplayStyle.None;
             }
 
-            if (GUILayout.Button("Preview"))
-            {
-                _iconTexture = BuildPreviewAtlas();
-            }
+            _createIconButton?.SetEnabled(false);
         }
 
         private void CreateAndSaveAtlas()
@@ -319,26 +449,29 @@ namespace Jeomseon.Editor.Tool
             return atlasTexture;
         }
 
-        private void DrawPresetControls()
+        private VisualElement BuildPresetControls()
         {
-            IconCreatorPreset picked = (IconCreatorPreset)EditorGUILayout.ObjectField(
-                new GUIContent("Preset"), _preset, typeof(IconCreatorPreset), false);
-            if (picked != _preset)
+            var container = new VisualElement();
+
+            _presetField = new ObjectField("Preset") { objectType = typeof(IconCreatorPreset), value = _preset };
+            _presetField.RegisterValueChangedCallback(evt =>
             {
-                _preset = picked;
+                _preset = evt.newValue as IconCreatorPreset;
                 EditorPrefs.SetString(LastPresetPrefsKey, _preset ? AssetDatabase.GetAssetPath(_preset) : string.Empty);
-            }
+                _loadPresetButton.SetEnabled(_preset != null);
+            });
+            container.Add(_presetField);
 
-            using (new EditorGUILayout.HorizontalScope())
-            {
-                using (new EditorGUI.DisabledScope(!_preset))
-                {
-                    if (GUILayout.Button("Load Preset")) LoadPreset();
-                }
-                if (GUILayout.Button("Save As Preset")) SaveAsPreset();
-            }
+            var row = new VisualElement { style = { flexDirection = FlexDirection.Row } };
 
-            EditorGUILayout.Space(EditorGUIUtility.singleLineHeight);
+            _loadPresetButton = new Button(LoadPreset) { text = "Load Preset" };
+            _loadPresetButton.SetEnabled(_preset != null);
+            row.Add(_loadPresetButton);
+
+            row.Add(new Button(SaveAsPreset) { text = "Save As Preset" });
+            container.Add(row);
+
+            return container;
         }
 
         private void LoadPreset()
@@ -349,6 +482,12 @@ namespace Jeomseon.Editor.Tool
             _divideCount = _preset.divideCount;
             _iconSources.Clear();
             _iconSources.AddRange(_preset.defaultIconSources);
+
+            _sizeField.SetValueWithoutNotify(_size);
+            _divideCountField.SetValueWithoutNotify(_divideCount);
+            _iconSourcesListView.Rebuild();
+            ReleasePreview();
+            UpdatePreviewButtonState();
         }
 
         private void SaveAsPreset()
@@ -377,6 +516,9 @@ namespace Jeomseon.Editor.Tool
 
             _preset = preset;
             EditorPrefs.SetString(LastPresetPrefsKey, path);
+
+            _presetField.SetValueWithoutNotify(_preset);
+            _loadPresetButton.SetEnabled(true);
         }
     }
 }

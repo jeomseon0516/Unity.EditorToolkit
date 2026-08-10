@@ -6,7 +6,8 @@ P2-01 작업의 일부로 `UIAnchorSetter`, `ObjectNamingChanger`, `BulkComponen
 `LoadableScriptableObjectDrawer`를 UI Toolkit(`CreateGUI()`/`CreatePropertyGUI()`) 기반으로
 이전했습니다. 책임이 불명확했던 `IMGUIHelper`는 제거했고, 실사용 중이던 레이아웃 헬퍼는
 `EditorGUILayoutActions`/`GUIStyleTexture`로 이름과 책임을 분리해 재구성했습니다.
-`IconCreator`와 SceneView 기반 UI는 후속 이전 대상입니다.
+`IconCreator`는 `CreateGUI()`와 `ListView`로 이전했습니다. SceneView 기반 범용 IMGUI 창은 제거하고,
+소비 패키지가 Unity `Overlay` API로 직접 구현하도록 책임을 이동했습니다.
 
 ## Icon Creator
 
