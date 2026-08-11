@@ -257,8 +257,8 @@ namespace Jeomseon.Editor.Tool
                 return;
             }
 
-            importer.textureType = _preset ? _preset.textureType : TextureImporterType.Sprite;
-            importer.spriteImportMode = _preset ? _preset.spriteImportMode : SpriteImportMode.Multiple;
+            importer.textureType = _preset ? _preset.TextureType : TextureImporterType.Sprite;
+            importer.spriteImportMode = _preset ? _preset.SpriteImportMode : SpriteImportMode.Multiple;
 
             AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
 
@@ -280,7 +280,7 @@ namespace Jeomseon.Editor.Tool
             dataProvider.Apply();
             importer.SaveAndReimport();
 
-            if (_preset == null || _preset.generateTmpSpriteAsset)
+            if (_preset == null || _preset.GenerateTmpSpriteAsset)
             {
                 GenerateTmpSpriteAsset(atlasTexture, path);
             }
@@ -478,10 +478,10 @@ namespace Jeomseon.Editor.Tool
         {
             if (!_preset) return;
 
-            _size = _preset.size;
-            _divideCount = _preset.divideCount;
+            _size = _preset.Size;
+            _divideCount = _preset.DivideCount;
             _iconSources.Clear();
-            _iconSources.AddRange(_preset.defaultIconSources);
+            _iconSources.AddRange(_preset.DefaultIconSources);
 
             _sizeField.SetValueWithoutNotify(_size);
             _divideCountField.SetValueWithoutNotify(_divideCount);
@@ -503,9 +503,9 @@ namespace Jeomseon.Editor.Tool
             bool isNew = !preset;
             if (isNew) preset = CreateInstance<IconCreatorPreset>();
 
-            preset.size = _size;
-            preset.divideCount = _divideCount;
-            preset.defaultIconSources = new List<Sprite>(_iconSources);
+            preset.Size = _size;
+            preset.DivideCount = _divideCount;
+            preset.DefaultIconSources = new List<Sprite>(_iconSources);
 
             if (isNew)
             {

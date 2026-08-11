@@ -7,20 +7,21 @@ using UnityEngine;
 using Jeomseon.Editor;
 using Jeomseon.Editor.Extensions;
 using Jeomseon.Editor.GUI;
+using UnityEngine.Serialization;
 
 namespace Jeomseon.Samples.EditorToolkit
 {
     internal sealed class EditorToolkitSampleData : ScriptableObject
     {
-        [SerializeField] private string _title = "Sample";
-        [SerializeField] private int _amount = 1;
-        [SerializeField] private bool _isEnabled = true;
+        [SerializeField, FormerlySerializedAs("_title")] private string title = "Sample";
+        [SerializeField, FormerlySerializedAs("_amount")] private int amount = 1;
+        [SerializeField, FormerlySerializedAs("_isEnabled")] private bool isEnabled = true;
     }
 
     public sealed class EditorToolkitSample : EditorWindow
     {
-        private static readonly string[] ToggleOptions = { "Apple", "Banana", "Cherry" };
-        private static readonly Dictionary<string, int> DropdownOptions = new()
+        private static readonly string[] _toggleOptions = { "Apple", "Banana", "Cherry" };
+        private static readonly Dictionary<string, int> _dropdownOptions = new()
         {
             { "Low", 0 },
             { "Medium", 1 },
@@ -44,9 +45,9 @@ namespace Jeomseon.Samples.EditorToolkit
         private void OnEnable()
         {
             _toggleEnumerator = new ToggleEnumerator<string>();
-            _toggleEnumerator.SetOnGetDataList(() => ToggleOptions);
+            _toggleEnumerator.SetOnGetDataList(() => _toggleOptions);
 
-            _dropdownController = new EditorDropdownController<int>("Priority", DropdownOptions);
+            _dropdownController = new EditorDropdownController<int>("Priority", _dropdownOptions);
 
             EditorToolkitSampleData sampleData = CreateInstance<EditorToolkitSampleData>();
             sampleData.hideFlags = HideFlags.DontSave;
@@ -113,9 +114,9 @@ namespace Jeomseon.Samples.EditorToolkit
 
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("6. SerializedPropertyExtensions.GetPropertyType()", EditorStyles.boldLabel);
-            DrawResolvedPropertyType("_title");
-            DrawResolvedPropertyType("_amount");
-            DrawResolvedPropertyType("_isEnabled");
+            DrawResolvedPropertyType("title");
+            DrawResolvedPropertyType("amount");
+            DrawResolvedPropertyType("isEnabled");
         }
 
         private void DrawResolvedPropertyType(string fieldName)

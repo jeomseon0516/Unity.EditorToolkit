@@ -16,7 +16,7 @@ namespace Jeomseon.ScriptableObjects.Editor
     {
         public override VisualElement CreatePropertyGUI(SerializedProperty property)
         {
-            SerializedProperty listProperty = property.FindPropertyRelative("_scriptableObjects")!;
+            SerializedProperty listProperty = property.FindPropertyRelative("scriptableObjects")!;
             RefreshScriptableObjects(property, listProperty);
 
             return new ListView
