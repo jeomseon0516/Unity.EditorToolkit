@@ -11,8 +11,8 @@ namespace Jeomseon.Editor.Window
 {
     internal class ScriptableObjectScrollView : VisualElement
     {
-        private static readonly CustomStyleProperty<Color> SelectionColorProperty = new("--unity-selection-color");
-        private static readonly Color UnselectedColor = ColorUtility.TryParseHtmlString("#3E3E3E", out Color parsedUnselectedColor)
+        private static readonly CustomStyleProperty<Color> _selectionColorProperty = new("--unity-selection-color");
+        private static readonly Color _unselectedColor = ColorUtility.TryParseHtmlString("#3E3E3E", out Color parsedUnselectedColor)
             ? parsedUnselectedColor
             : Color.gray;
 
@@ -43,7 +43,7 @@ namespace Jeomseon.Editor.Window
         {
             if (button is not null)
             {
-                button.style.backgroundColor = UnselectedColor;
+                button.style.backgroundColor = _unselectedColor;
             }
         }
 
@@ -63,7 +63,7 @@ namespace Jeomseon.Editor.Window
                 ResetToUnselected(_selectedObject);
 
                 _selectedObject = selectedObject;
-                _selectedObject.style.backgroundColor = _selectedObject.customStyle.TryGetValue(SelectionColorProperty, out Color selectionColor)
+                _selectedObject.style.backgroundColor = _selectedObject.customStyle.TryGetValue(_selectionColorProperty, out Color selectionColor)
                     ? selectionColor
                     : Color.gray;
             };
@@ -193,7 +193,7 @@ namespace Jeomseon.Editor.Window
                     borderBottomRightRadius = 0,
                     borderTopRightRadius = 0,
                     whiteSpace = WhiteSpace.Normal,
-                    backgroundColor = UnselectedColor
+                    backgroundColor = _unselectedColor
                 },
                 text = so.name,
             };

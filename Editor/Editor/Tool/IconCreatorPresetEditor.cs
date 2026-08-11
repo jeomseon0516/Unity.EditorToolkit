@@ -28,11 +28,11 @@ namespace Jeomseon.Editor.Tool
             warnings.Clear();
 
             var preset = (IconCreatorPreset)target;
-            int capacity = preset.divideCount * preset.divideCount;
+            int capacity = preset.DivideCount * preset.DivideCount;
             int assignedCount = 0;
             int missingCount = 0;
 
-            foreach (Sprite sprite in preset.defaultIconSources)
+            foreach (Sprite sprite in preset.DefaultIconSources)
             {
                 if (!sprite)
                 {

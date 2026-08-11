@@ -2,6 +2,19 @@
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-08-11
+
+- 워크스페이스 명명 규칙에 맞춰 Unity가 직렬화하는 필드(`[SerializeField] private` 및
+  `IconCreatorPreset`의 public 필드)를 정리하고 기존 이름을 `[FormerlySerializedAs]`로
+  보존했습니다. `LoadableScriptableObjectDrawer`의 `FindPropertyRelative` 문자열과
+  `IconCreator`/`IconCreatorPresetEditor`의 필드 접근부도 함께 갱신했습니다. 기존
+  Scene·Prefab·Preset 자산의 직렬화된 값은 그대로 유지됩니다.
+- **(Breaking)** `IconCreatorPreset`의 public 필드 이름을 PascalCase로 정리했습니다:
+  `size`→`Size`, `divideCount`→`DivideCount`, `textureType`→`TextureType`,
+  `spriteImportMode`→`SpriteImportMode`, `generateTmpSpriteAsset`→`GenerateTmpSpriteAsset`,
+  `defaultIconSources`→`DefaultIconSources`. 코드에서 이 필드를 직접 참조하던 외부 소비처가
+  있다면 이름을 갱신해야 합니다.
+
 ## [0.5.0] - 2026-08-10
 
 - **(Breaking)** GridTileSystem에만 사용되던 `SceneViewInnerWindow`를 제거했습니다. 소비 패키지는
