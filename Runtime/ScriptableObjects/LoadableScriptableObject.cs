@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Serialization;
 
-namespace Jeomseon.ScriptableObjects
+namespace Jeomseon.Unity.EditorToolkit.ScriptableObjects
 {
     [System.Serializable]
     public sealed class LoadableScriptableObject<T> where T : UnityEngine.ScriptableObject

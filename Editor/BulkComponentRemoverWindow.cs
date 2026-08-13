@@ -19,7 +19,7 @@ using UnityEngine.UIElements;
 /// - 미리보기 및 Undo 지원
 /// 메뉴: Jeomseon > Tool > Bulk Component Remover
 /// </summary>
-namespace Jeomseon.Editor
+namespace Jeomseon.Unity.EditorToolkit.Editor
 {
     public class BulkComponentRemoverWindow : EditorWindow
     {

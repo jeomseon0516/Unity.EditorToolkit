@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Serialization;
 
-namespace Jeomseon.Editor.Tool
+namespace Jeomseon.Unity.EditorToolkit.Editor.Tool
 {
     [CreateAssetMenu(fileName = "IconCreatorPreset", menuName = "Jeomseon/Icon Creator Preset")]
     public sealed class IconCreatorPreset : ScriptableObject

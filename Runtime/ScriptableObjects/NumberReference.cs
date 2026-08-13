@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Jeomseon.ScriptableObjects
+namespace Jeomseon.Unity.EditorToolkit.ScriptableObjects
 {
     public sealed class NumberReference : UnityEngine.ScriptableObject
     {

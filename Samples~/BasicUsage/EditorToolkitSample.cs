@@ -4,9 +4,9 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
-using Jeomseon.Editor;
-using Jeomseon.Editor.Extensions;
-using Jeomseon.Editor.GUI;
+using Jeomseon.Unity.EditorToolkit.Editor;
+using Jeomseon.Unity.EditorToolkit.Editor.Extensions;
+using Jeomseon.Unity.EditorToolkit.Editor.GUI;
 using UnityEngine.Serialization;
 
 namespace Jeomseon.Samples.EditorToolkit

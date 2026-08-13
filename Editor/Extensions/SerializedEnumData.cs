@@ -1,7 +1,7 @@
 #if UNITY_EDITOR
 using System;
 
-namespace Jeomseon.Editor.Extensions
+namespace Jeomseon.Unity.EditorToolkit.Editor.Extensions
 {
     /// <summary>
     /// Provides the value and metadata of an enum SerializedProperty.

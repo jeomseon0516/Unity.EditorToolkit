@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 
-namespace Jeomseon.Editor.GUI
+namespace Jeomseon.Unity.EditorToolkit.Editor.GUI
 {
     public sealed class EditorDropdownController<T>
     {

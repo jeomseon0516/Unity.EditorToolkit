@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace Jeomseon.Editor.GUI
+namespace Jeomseon.Unity.EditorToolkit.Editor.GUI
 {
     using GUI = UnityEngine.GUI;
 

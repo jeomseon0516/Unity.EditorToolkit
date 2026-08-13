@@ -4,7 +4,7 @@ using System.Reflection;
 using UnityEditor;
 using Object = UnityEngine.Object;
 
-namespace Jeomseon.Editor.Extensions
+namespace Jeomseon.Unity.EditorToolkit.Editor.Extensions
 {
     using Attribute = Attribute;
 
