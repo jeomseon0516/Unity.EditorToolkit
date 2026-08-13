@@ -64,7 +64,7 @@ namespace Jeomseon.Unity.EditorToolkit.Editor.Tool
 
         private void CreateGUI()
         {
-            VisualElement root = rootVisualElement;
+            var root = rootVisualElement;
             root.style.paddingLeft = 8;
             root.style.paddingRight = 8;
             root.style.paddingTop = 8;
