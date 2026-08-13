@@ -6,7 +6,7 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace Jeomseon.Editor
+namespace Jeomseon.Unity.EditorToolkit.Editor
 {
     [InitializeOnLoad]
     internal static class PreviewSceneCleaner

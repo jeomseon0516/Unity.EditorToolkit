@@ -4,7 +4,7 @@ using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Jeomseon.Editor.Tool
+namespace Jeomseon.Unity.EditorToolkit.Editor.Tool
 {
     [CustomEditor(typeof(IconCreatorPreset))]
     internal sealed class IconCreatorPresetEditor : UnityEditor.Editor

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Jeomseon.ScriptableObjects
+namespace Jeomseon.Unity.EditorToolkit.ScriptableObjects
 {
     [CreateAssetMenu(fileName = "SpriteReference", menuName = "Scriptable Object/Sprite Reference")]
     public sealed class SpriteReference : ScriptableObject

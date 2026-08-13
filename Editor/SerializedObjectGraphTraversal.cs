@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
-namespace Jeomseon.Editor
+namespace Jeomseon.Unity.EditorToolkit.Editor
 {
     using Attribute = System.Attribute;
 

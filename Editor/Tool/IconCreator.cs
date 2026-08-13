@@ -7,9 +7,9 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor.U2D.Sprites;
 using TMPro;
-using Jeomseon.Imaging;
+using Jeomseon.Unity.Core.Imaging;
 
-namespace Jeomseon.Editor.Tool
+namespace Jeomseon.Unity.EditorToolkit.Editor.Tool
 {
     /// <summary>
     /// 여러 개별 아이콘 스프라이트를 고정 격자(size × divideCount²) 텍스처로 합치고,

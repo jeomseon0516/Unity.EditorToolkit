@@ -6,8 +6,9 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEditor;
 using UnityEditor.UIElements;
+using Jeomseon.Unity.EditorToolkit.ScriptableObjects;
 
-namespace Jeomseon.ScriptableObjects.Editor
+namespace Jeomseon.Unity.EditorToolkit.Editor.ScriptableObjects.Editor
 {
     using ScriptableObject = UnityEngine.ScriptableObject;
 

@@ -1,7 +1,7 @@
 #if UNITY_EDITOR
 using UnityEngine;
 
-namespace Jeomseon.Editor.Window
+namespace Jeomseon.Unity.EditorToolkit.Editor.Window
 {
     using Editor = UnityEditor.Editor;
 

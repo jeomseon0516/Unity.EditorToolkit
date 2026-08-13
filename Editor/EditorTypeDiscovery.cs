@@ -5,7 +5,7 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
-namespace Jeomseon.Editor
+namespace Jeomseon.Unity.EditorToolkit.Editor
 {
     /// <summary>
     /// Unity Editor가 색인한 TypeCache를 사용해 타입과 현재 로드된 Unity 객체를 탐색합니다.

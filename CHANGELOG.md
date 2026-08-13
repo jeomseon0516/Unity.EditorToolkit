@@ -1,6 +1,12 @@
 # 변경 기록
 
-## [Unreleased]
+## [0.7.0] - 2026-08-13
+
+- **(Breaking)** 네임스페이스를 `Jeomseon.Unity.EditorToolkit`(Runtime)/`Jeomseon.Unity.EditorToolkit.Editor`(Editor)
+  기준으로 정리했습니다(`Jeomseon.ScriptableObjects`→`Jeomseon.Unity.EditorToolkit.ScriptableObjects`,
+  `Jeomseon.Editor`→`Jeomseon.Unity.EditorToolkit.Editor`, 하위 `.Extensions`/`.GUI`/`.Tool`/`.Window`도
+  동일). `Editor/Editor/` 중복 폴더를 `Editor/`로 평탄화했습니다(GUID 보존). 워크스페이스 전체
+  네임스페이스 규칙(`AGENTS.md` 참고)을 적용한 것입니다.
 
 ## [0.6.0] - 2026-08-11
 

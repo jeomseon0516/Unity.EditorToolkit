@@ -6,9 +6,9 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEditor;
 using UnityEditor.UIElements;
-using Jeomseon.ScriptableObjects.Editor;
+using Jeomseon.Unity.EditorToolkit.Editor.ScriptableObjects.Editor;
 
-namespace Jeomseon.Editor.Window
+namespace Jeomseon.Unity.EditorToolkit.Editor.Window
 {
     internal readonly struct ScrollBuildOption
     {
