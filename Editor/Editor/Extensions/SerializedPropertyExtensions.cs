@@ -93,8 +93,7 @@ namespace Jeomseon.Editor.Extensions
 
         public static SerializedEnumData GetEnumData(this SerializedProperty prop)
         {
-            if (prop?.propertyType != SerializedPropertyType.Enum)
-                return null;
+            if (prop?.propertyType != SerializedPropertyType.Enum) return null;
 
             int index = prop.enumValueIndex;
             string[] names = prop.enumNames;
