@@ -3,7 +3,7 @@ using System;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Jeomseon.Editor.Window
+namespace Jeomseon.Unity.EditorToolkit.Editor.Window
 {
     internal sealed class ScriptableObjectButton : Button
     {

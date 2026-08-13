@@ -1,6 +1,6 @@
 {
   "name": "Jeomseon.Unity.EditorToolkit.Editor",
-  "rootNamespace": "Jeomseon",
+  "rootNamespace": "Jeomseon.Unity.EditorToolkit",
   "references": [
     "Jeomseon.Unity.EditorToolkit",
     "Jeomseon.Unity.Core",

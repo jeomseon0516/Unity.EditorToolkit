@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace Jeomseon.Editor
+namespace Jeomseon.Unity.EditorToolkit.Editor
 {
     using Attribute = System.Attribute;
 

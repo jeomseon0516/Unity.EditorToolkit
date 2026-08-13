@@ -7,7 +7,7 @@ using UnityEditor;
 using static UnityEngine.ScriptableObject;
 using static UnityEditor.AssetDatabase;
 
-namespace Jeomseon.ScriptableObjects.Editor
+namespace Jeomseon.Unity.EditorToolkit.Editor.ScriptableObjects.Editor
 {
     public static class ScriptableObjectHandler
     {

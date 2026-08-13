@@ -7,7 +7,7 @@ using UnityEngine.UIElements;
 using Jeomseon.Collections;
 using UnityEditor.UIElements;
 
-namespace Jeomseon.Editor.Window
+namespace Jeomseon.Unity.EditorToolkit.Editor.Window
 {
     public sealed class ObjectNamingChanger : EditorWindow
     {

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace Jeomseon.Editor.Extensions
+namespace Jeomseon.Unity.EditorToolkit.Editor.Extensions
 {
     public static class SerializedObjectExtensions
     {

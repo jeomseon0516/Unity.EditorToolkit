@@ -7,9 +7,9 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEditor;
 using UnityEditor.SceneManagement;
-using Jeomseon.Editor;
+using Jeomseon.Unity.EditorToolkit.Editor;
 
-namespace Jeomseon.Editor
+namespace Jeomseon.Unity.EditorToolkit.Editor
 {
     public static class EditorHelper 
     {
