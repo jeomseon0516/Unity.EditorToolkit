@@ -3,7 +3,7 @@ using System;
 using UnityEngine;
 using UnityEditor;
 
-namespace Jeomseon.Editor.GUI
+namespace Jeomseon.Unity.EditorToolkit.Editor.GUI
 {
     public static class EditorGUILayoutActions
     {

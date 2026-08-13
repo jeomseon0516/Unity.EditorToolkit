@@ -1,7 +1,7 @@
 #if UNITY_EDITOR
 using UnityEngine;
 
-namespace Jeomseon.Editor.GUI
+namespace Jeomseon.Unity.EditorToolkit.Editor.GUI
 {
     public static class GUIStyleTexture
     {

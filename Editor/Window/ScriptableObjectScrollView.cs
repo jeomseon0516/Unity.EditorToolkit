@@ -7,7 +7,7 @@ using UnityEngine.UIElements;
 using UnityEditor.UIElements;
 using Jeomseon.Collections;
 
-namespace Jeomseon.Editor.Window
+namespace Jeomseon.Unity.EditorToolkit.Editor.Window
 {
     internal class ScriptableObjectScrollView : VisualElement
     {
