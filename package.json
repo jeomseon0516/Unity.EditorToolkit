@@ -1,6 +1,6 @@
 {
   "name": "com.jeomseon.unity.editor-toolkit",
-  "version": "0.7.2",
+  "version": "0.7.3",
   "displayName": "Jeomseon Unity Editor Toolkit",
   "description": "Shared editor APIs, editor windows, and ScriptableObject authoring tools.",
   "unity": "6000.6",
@@ -8,7 +8,7 @@
   "dependencies": {
     "com.jeomseon.unity.core": "0.3.2",
     "com.unity.2d.sprite": "1.0.0",
-    "com.unity.ugui": "1.0.0"
+    "com.unity.ugui": "2.0.0"
   },
   "author": {
     "name": "jeomseon0516",
