@@ -35,12 +35,33 @@ enum 프로퍼티는 `SerializedEnumData`로 반환되며 `EnumType`, `Value`, `
 
 Attribute와 관계없는 공통 Editor API, EditorWindow 및 ScriptableObject 제작 도구를 제공합니다.
 
-## 설치
+## OpenUPM으로 설치
 
-OpenUPM 등록 전에는 Package Manager의 **Add package from git URL**에서 다음 주소를 사용합니다.
+프로젝트의 `Packages/manifest.json`에 OpenUPM scoped registry를 한 번 등록합니다.
+
+```json
+{
+  "scopedRegistries": [
+    {
+      "name": "OpenUPM",
+      "url": "https://package.openupm.com",
+      "scopes": [
+        "com.jeomseon"
+      ]
+    }
+  ],
+  "dependencies": {
+    "com.jeomseon.unity.editor-toolkit": "0.7.3"
+  }
+}
+```
+
+## Git URL로 설치
+
+Unity Package Manager의 `Install package from git URL`에 다음 주소를 사용합니다.
 
 ```text
-https://github.com/jeomseon0516/Unity.EditorToolkit.git#v0.4.0
+https://github.com/jeomseon0516/Unity.EditorToolkit.git#v0.7.3
 ```
 
 ## 리팩토링 방침

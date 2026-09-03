@@ -1,5 +1,36 @@
 # Jeomseon Unity Editor Toolkit
 
+Shared editor APIs, editor windows, and ScriptableObject authoring tools.
+
+## Install via OpenUPM
+
+Register the OpenUPM scoped registry once in your project's `Packages/manifest.json`.
+
+```json
+{
+  "scopedRegistries": [
+    {
+      "name": "OpenUPM",
+      "url": "https://package.openupm.com",
+      "scopes": [
+        "com.jeomseon"
+      ]
+    }
+  ],
+  "dependencies": {
+    "com.jeomseon.unity.editor-toolkit": "0.7.3"
+  }
+}
+```
+
+## Install via Git URL
+
+Enter the following URL in Unity Package Manager's `Install package from git URL`.
+
+```text
+https://github.com/jeomseon0516/Unity.EditorToolkit.git#v0.7.3
+```
+
 ## UI Toolkit migration status
 
 As part of P2-01, `UIAnchorSetter`, `ObjectNamingChanger`, `BulkComponentRemoverWindow`,
