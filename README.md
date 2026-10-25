@@ -4,6 +4,10 @@
 
 패키지 간 공통 Editor API와 독립 제작 도구를 제공합니다. IconCreator는 개별 Sprite를 격자 텍스처와 TMP SpriteAsset으로 변환합니다.
 
+![Fixed-grid icon authoring](Documentation~/Images/usage-flow.svg)
+
+원본 아이콘에서 격자 텍스처와 선택적 TMP 메타데이터를 만듭니다. 입력 변경 시 Preview를 다시 생성합니다.
+
 ## 빠르게 시작하기
 
 Jeomseon/Icon Creator 열기 → 원본 Sprite·크기·Divide Count 설정 또는 Preset 로드 → Preview → Create Icon. 다른 도구는 Jeomseon/Tool 메뉴에서 선택합니다.
@@ -118,6 +122,13 @@ enum 프로퍼티는 `SerializedEnumData`로 반환되며 `EnumType`, `Value`, `
 `SerializedPropertyExtensions.GetEnumData()`를 직접 사용할 수도 있습니다.
 
 Attribute와 관계없는 공통 Editor API, EditorWindow 및 ScriptableObject 제작 도구를 제공합니다.
+
+## 동작 확인
+
+1. Basic Usage를 Import하고 `Jeomseon/Icon Creator`에서 제공된 Preset을 Load합니다.
+2. 4색 Sprite의 순서와 Size/Divide Count를 확인하고 Preview를 실행합니다.
+3. Create Icon으로 프로젝트 안에 저장하고 PNG의 셀 순서와 Sprite slicing metadata를 확인합니다.
+4. GenerateTmpSpriteAsset을 켠 경우 생성된 TMP SpriteAsset의 문자·glyph 참조를 확인합니다. 입력 변경 뒤에는 다시 Preview해야 합니다.
 
 ## 샘플 실행
 

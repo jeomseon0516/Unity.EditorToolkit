@@ -4,6 +4,10 @@
 
 Provides shared Editor APIs and standalone authoring tools. IconCreator turns individual Sprites into a grid texture and TMP SpriteAsset.
 
+![Fixed-grid icon authoring](Documentation~/Images/usage-flow.svg)
+
+Create a grid texture and optional TMP metadata from source icons. Regenerate the preview after changing inputs.
+
 ## Quick start
 
 Open Jeomseon/Icon Creator, set source Sprites/size/Divide Count or load a Preset, Preview, then Create Icon. Other utilities live under Jeomseon/Tool.
@@ -117,6 +121,13 @@ Shared editor APIs, editor windows, and ScriptableObject authoring tools.
 Feature-independent inspector attribute declarations and their editor implementations
 belong to `com.jeomseon.unity.attributes`. Feature-specific attributes and drawers
 belong to their feature packages.
+
+## Verify the behavior
+
+1. Import Basic Usage and Load its Preset in `Jeomseon/Icon Creator`.
+2. Check the four colored Sprites, their order, Size, and Divide Count; run Preview.
+3. Use Create Icon to save inside the project, then check PNG cell order and Sprite slicing metadata.
+4. When GenerateTmpSpriteAsset is enabled, check the generated TMP SpriteAsset character/glyph references. Preview again after changing inputs.
 
 ## Samples
 
