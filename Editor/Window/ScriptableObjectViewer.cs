@@ -31,23 +31,25 @@ namespace Jeomseon.Unity.EditorToolkit.Editor.Window
 
     internal abstract class ScriptableObjectViewer : EditorWindow
     {
-        private readonly CustomInspectorEditorWindow _inspectorEditor = new();
+        // VisualElement는 생성자·필드 초기화에서 만들 수 없으므로 CreateGUI에서 생성한다.
+        private ScriptableObjectInspector _inspector;
         private readonly List<ScriptableObjectScrollView> _scrollViews = new();
         private ToolbarButton _selectedButton = null;
-        private UnityEngine.ScriptableObject _selectedObject = null;
         private Color _originalColor = ColorUtility.TryParseHtmlString("#505050", out Color color) ? color : Color.grey;
 
         protected abstract ScrollBuildOption[] GetTargetScriptableObjectType();
 
         protected void OnDisable()
         {
-            _inspectorEditor.OnDisable();
+            _inspector?.SetTarget(null);
             _scrollViews.ForEach(view => view.OnDisable());
         }
 
         protected void CreateGUI()
         {
             VisualElement root = rootVisualElement;
+            _inspector = new ScriptableObjectInspector();
+            _scrollViews.Clear();
             Toolbar toolbar = new()
             {
                 style =
@@ -93,32 +95,19 @@ namespace Jeomseon.Unity.EditorToolkit.Editor.Window
                 buttonOption.Item1.clicked += () =>
                 {
                     buttonOption.Item2.OnEnable();
-                    _selectedObject = null;
+                    _inspector.SetTarget(null);
                     VisualElement scrollView = root.Q<ScriptableObjectScrollView>("SOScrollView");
                     scrollView?.RemoveFromHierarchy();
-                    
+
                     contentElement.Insert(0, buttonOption.Item2);
                 };
-                buttonOption.Item2.OnSelectObject += scriptableObject => _selectedObject = scriptableObject.ScriptableObject;
+                buttonOption.Item2.OnSelectObject += scriptableObject => _inspector.SetTarget(scriptableObject.ScriptableObject);
                 _scrollViews.Add(buttonOption.Item2);
             }
 
-            Vector2 scrollPosition = Vector2.zero;
-            IMGUIContainer imguiContainer = new(() =>
-            {
-                if (!_selectedObject) return;
-
-                using EditorGUILayout.ScrollViewScope scope = new(scrollPosition);
-                _inspectorEditor.OnInspectorGUI(_selectedObject);
-                scrollPosition = scope.scrollPosition;
-            })
-            {
-                style =
-                {
-                    flexGrow = 1
-                }
-            };
-            contentElement.Add(imguiContainer);
+            var inspectorScrollView = new ScrollView { style = { flexGrow = 1 } };
+            inspectorScrollView.Add(_inspector);
+            contentElement.Add(inspectorScrollView);
 
             root.Add(toolbar);
             root.Add(contentElement);
