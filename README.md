@@ -97,6 +97,17 @@ UI Anchor Setter, Object Naming Changer, Bulk Component Remover는 실제 프로
 
 ## API 사용과 상세 설명
 
+공개 IMGUI helper는 IMGUI 호스트용으로 유지하고, 같은 기능의 UI Toolkit판을 함께 제공합니다.
+UI Toolkit판은 `VisualElement`를 반환하므로 `CreateGUI()`/`CreateInspectorGUI()`/`CreatePropertyGUI()`
+안에서 호출합니다.
+
+| IMGUI helper | UI Toolkit판 |
+| --- | --- |
+| `EditorGUILayoutActions.ActionEditorVertical` | `EditorLayoutElements.CreateVertical` / `CreateVerticalBox` |
+| `EditorGUILayoutActions.ActionEditorVerticalBox` | `EditorLayoutElements.CreateVerticalScrollBox` |
+| `ToggleEnumerator<T>.SelectEnumeratedToggles` | `ToggleEnumerator<T>.CreateEnumeratedToggles` |
+| `EditorDropdownController<T>.Dropdown` | `EditorDropdownController<T>.CreateDropdown` |
+
 ### Icon Creator
 
 `IconCreator`(`Jeomseon/Icon Creator`)는 여러 개별 아이콘 스프라이트를 고정 격자

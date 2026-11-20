@@ -1,0 +1,11 @@
+{
+  "name": "Jeomseon.Unity.EditorToolkit.Tests",
+  "rootNamespace": "Jeomseon.Unity.EditorToolkit.Tests",
+  "references": [
+    "Jeomseon.Unity.EditorToolkit",
+    "Jeomseon.Unity.EditorToolkit.Editor"
+  ],
+  "includePlatforms": ["Editor"],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "autoReferenced": false
+}

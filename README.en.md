@@ -93,6 +93,17 @@ The sample EditorWindow demonstrates the basic shared API behavior.
 
 ## API usage and details
 
+The public IMGUI helpers remain available for IMGUI hosts, and each now has a UI Toolkit
+counterpart with the same behavior. The UI Toolkit versions return a `VisualElement`, so call
+them from `CreateGUI()`/`CreateInspectorGUI()`/`CreatePropertyGUI()`.
+
+| IMGUI helper | UI Toolkit counterpart |
+| --- | --- |
+| `EditorGUILayoutActions.ActionEditorVertical` | `EditorLayoutElements.CreateVertical` / `CreateVerticalBox` |
+| `EditorGUILayoutActions.ActionEditorVerticalBox` | `EditorLayoutElements.CreateVerticalScrollBox` |
+| `ToggleEnumerator<T>.SelectEnumeratedToggles` | `ToggleEnumerator<T>.CreateEnumeratedToggles` |
+| `EditorDropdownController<T>.Dropdown` | `EditorDropdownController<T>.CreateDropdown` |
+
 ### Icon Creator
 
 `IconCreator` (`Jeomseon/Icon Creator`) combines several individual icon sprites into a

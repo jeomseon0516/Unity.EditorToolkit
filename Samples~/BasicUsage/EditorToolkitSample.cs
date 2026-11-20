@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.UIElements;
 using Jeomseon.Unity.EditorToolkit.Editor;
 using Jeomseon.Unity.EditorToolkit.Editor.Extensions;
 using Jeomseon.Unity.EditorToolkit.Editor.GUI;
@@ -31,8 +32,6 @@ namespace Jeomseon.Samples.EditorToolkit
         private ToggleEnumerator<string> _toggleEnumerator;
         private EditorDropdownController<int> _dropdownController;
         private int _dropdownValue;
-        private Vector2 _boxScrollPosition;
-        private GUIStyle _boxStyle;
         private List<Type> _discoveredTypes;
         private SerializedObject _sampleSerializedObject;
 
@@ -62,68 +61,135 @@ namespace Jeomseon.Samples.EditorToolkit
             }
         }
 
-        private void OnGUI()
+        private void CreateGUI()
         {
-            // GUI.skin은 OnGUI 안에서만 접근 가능하므로, 초기화를 OnEnable이 아닌 여기서 1회만 수행합니다.
-            if (!_toggleEnumerator.IsInitializeGUIStyle)
+            VisualElement root = rootVisualElement;
+
+            root.Add(CreateHeader("1. ToggleEnumerator<T>.CreateEnumeratedToggles"));
+            Label selectedLabel = null;
+            root.Add(_toggleEnumerator.CreateEnumeratedToggles(
+                option => option,
+                new Color32(60, 120, 200, 255),
+                new Color32(60, 60, 60, 255),
+                24f,
+                selected => selectedLabel.text = selected ?? "(none)"));
+            root.Add(CreateLabelValueRow("Selected", _toggleEnumerator.ChooseTarget ?? "(none)", out selectedLabel));
+
+            root.Add(CreateSpace());
+            root.Add(CreateHeader("2. EditorDropdownController<T>.CreateDropdown"));
+            Label dropdownValueLabel = null;
+            root.Add(_dropdownController.CreateDropdown(value =>
             {
-                _toggleEnumerator.InitializeGUIStyle(new Color32(60, 120, 200, 255), new Color32(60, 60, 60, 255));
-            }
+                _dropdownValue = value;
+                dropdownValueLabel.text = _dropdownValue.ToString();
+            }));
+            root.Add(CreateLabelValueRow("Selected Value", _dropdownValue.ToString(), out dropdownValueLabel));
 
-            EditorGUILayout.LabelField("1. ToggleEnumerator<T> + GUIStyleTexture", EditorStyles.boldLabel);
-            string selected = _toggleEnumerator.SelectEnumeratedToggles(option => option, GUILayout.Height(24));
-            EditorGUILayout.LabelField("Selected", selected ?? "(none)");
-
-            EditorGUILayout.Space();
-            EditorGUILayout.LabelField("2. EditorDropdownController<T>", EditorStyles.boldLabel);
-            _dropdownController.Dropdown(value => _dropdownValue = value);
-            EditorGUILayout.LabelField("Selected Value", _dropdownValue.ToString());
-
-            EditorGUILayout.Space();
-            EditorGUILayout.LabelField("3. EditorGUILayoutActions.ActionEditorVerticalBox", EditorStyles.boldLabel);
-            _boxStyle ??= new GUIStyle(UnityEngine.GUI.skin.box);
-            EditorGUILayoutActions.ActionEditorVerticalBox(_boxStyle, ref _boxScrollPosition, () =>
+            root.Add(CreateSpace());
+            root.Add(CreateHeader("3. EditorLayoutElements.CreateVerticalScrollBox"));
+            root.Add(EditorLayoutElements.CreateVerticalScrollBox(box =>
             {
                 for (int i = 0; i < 10; i++)
                 {
-                    EditorGUILayout.LabelField($"Scrollable line {i}");
+                    box.Add(new Label($"Scrollable line {i}"));
                 }
-            }, GUILayout.Height(80));
+            }, 80f));
 
-            EditorGUILayout.Space();
-            EditorGUILayout.LabelField("4. EditorGUILayoutActions.ActionEditorVertical", EditorStyles.boldLabel);
-            EditorGUILayoutActions.ActionEditorVertical(() =>
+            root.Add(CreateSpace());
+            root.Add(CreateHeader("4. EditorLayoutElements.CreateVerticalBox"));
+            root.Add(EditorLayoutElements.CreateVerticalBox(box =>
             {
-                EditorGUILayout.HelpBox("This block is wrapped by ActionEditorVertical.", MessageType.Info);
-            }, UnityEngine.GUI.skin.box);
+                box.Add(new HelpBox("This block is wrapped by CreateVerticalBox.", HelpBoxMessageType.Info));
+            }));
 
-            EditorGUILayout.Space();
-            EditorGUILayout.LabelField("5. EditorTypeDiscovery", EditorStyles.boldLabel);
-            if (GUILayout.Button("Discover Concrete Component Types"))
+            root.Add(CreateSpace());
+            root.Add(CreateHeader("5. EditorTypeDiscovery"));
+            var discoveredTypesContainer = new VisualElement();
+            root.Add(new Button(() =>
             {
                 _discoveredTypes = EditorTypeDiscovery.GetConcreteTypesDerivedFrom<Component>().ToList();
-            }
-            if (_discoveredTypes is not null)
+                RefreshDiscoveredTypes(discoveredTypesContainer);
+            })
             {
-                EditorGUILayout.LabelField($"Found {_discoveredTypes.Count} concrete Component type(s). First 5:");
-                foreach (Type type in _discoveredTypes.Take(5))
-                {
-                    EditorGUILayout.LabelField($"- {type.FullName}");
-                }
-            }
+                text = "Discover Concrete Component Types"
+            });
+            root.Add(discoveredTypesContainer);
+            RefreshDiscoveredTypes(discoveredTypesContainer);
 
-            EditorGUILayout.Space();
-            EditorGUILayout.LabelField("6. SerializedPropertyExtensions.GetPropertyType()", EditorStyles.boldLabel);
-            DrawResolvedPropertyType("title");
-            DrawResolvedPropertyType("amount");
-            DrawResolvedPropertyType("isEnabled");
+            root.Add(CreateSpace());
+            root.Add(CreateHeader("6. SerializedPropertyExtensions.GetPropertyType()"));
+            root.Add(CreateResolvedPropertyTypeRow("title"));
+            root.Add(CreateResolvedPropertyTypeRow("amount"));
+            root.Add(CreateResolvedPropertyTypeRow("isEnabled"));
         }
 
-        private void DrawResolvedPropertyType(string fieldName)
+        private void RefreshDiscoveredTypes(VisualElement container)
+        {
+            container.Clear();
+            if (_discoveredTypes is null)
+            {
+                return;
+            }
+
+            container.Add(new Label($"Found {_discoveredTypes.Count} concrete Component type(s). First 5:"));
+            foreach (Type type in _discoveredTypes.Take(5))
+            {
+                container.Add(new Label($"- {type.FullName}"));
+            }
+        }
+
+        private VisualElement CreateResolvedPropertyTypeRow(string fieldName)
         {
             SerializedProperty property = _sampleSerializedObject.FindProperty(fieldName);
             Type resolvedType = property?.GetPropertyType();
-            EditorGUILayout.LabelField(fieldName, resolvedType?.Name ?? "(unresolved)");
+            return CreateLabelValueRow(fieldName, resolvedType?.Name ?? "(unresolved)", out _);
+        }
+
+        private static Label CreateHeader(string text)
+        {
+            return new Label(text)
+            {
+                style =
+                {
+                    unityFontStyleAndWeight = FontStyle.Bold
+                }
+            };
+        }
+
+        private static VisualElement CreateSpace()
+        {
+            // EditorGUILayout.Space()의 기본 간격(6px)과 맞춥니다.
+            return new VisualElement
+            {
+                style =
+                {
+                    height = 6
+                }
+            };
+        }
+
+        private static VisualElement CreateLabelValueRow(string label, string value, out Label valueLabel)
+        {
+            var row = new VisualElement
+            {
+                style =
+                {
+                    flexDirection = FlexDirection.Row
+                }
+            };
+
+            row.Add(new Label(label)
+            {
+                style =
+                {
+                    width = EditorGUIUtility.labelWidth,
+                    flexShrink = 0
+                }
+            });
+
+            valueLabel = new Label(value);
+            row.Add(valueLabel);
+            return row;
         }
     }
 }
