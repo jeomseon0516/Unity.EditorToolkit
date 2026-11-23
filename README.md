@@ -23,7 +23,7 @@ SpriteAtlas의 런타임 패킹과 목적이 다릅니다. Editor API는 Editor 
 ## 요구 사항
 
 - Unity `6000.6.0f1`
-- 패키지: `com.jeomseon.unity.editor-toolkit` `0.7.3`
+- 패키지: `com.jeomseon.unity.editor-toolkit` `0.8.0`
 - `com.jeomseon.unity.core`: `0.3.2`
 - `com.unity.2d.sprite`: `1.0.0`
 - `com.unity.ugui`: `2.0.0`
@@ -44,7 +44,7 @@ SpriteAtlas의 런타임 패킹과 목적이 다릅니다. Editor API는 Editor 
     }
   ],
   "dependencies": {
-    "com.jeomseon.unity.editor-toolkit": "0.7.3"
+    "com.jeomseon.unity.editor-toolkit": "0.8.0"
   }
 }
 ```
@@ -52,7 +52,7 @@ SpriteAtlas의 런타임 패킹과 목적이 다릅니다. Editor API는 Editor 
 또는 Package Manager의 **Install package from git URL**을 사용합니다:
 
 ```text
-https://github.com/jeomseon0516/Unity.EditorToolkit.git#v0.7.3
+https://github.com/jeomseon0516/Unity.EditorToolkit.git#v0.8.0
 ```
 
 ## 설계와 동작
@@ -96,6 +96,17 @@ UI Anchor Setter, Object Naming Changer, Bulk Component Remover는 실제 프로
 선택 범위와 Undo를 확인하며 사용합니다. 기본 API 동작은 샘플 EditorWindow에서 비교할 수 있습니다.
 
 ## API 사용과 상세 설명
+
+공개 IMGUI helper는 IMGUI 호스트용으로 유지하고, 같은 기능의 UI Toolkit판을 함께 제공합니다.
+UI Toolkit판은 `VisualElement`를 반환하므로 `CreateGUI()`/`CreateInspectorGUI()`/`CreatePropertyGUI()`
+안에서 호출합니다.
+
+| IMGUI helper | UI Toolkit판 |
+| --- | --- |
+| `EditorGUILayoutActions.ActionEditorVertical` | `EditorLayoutElements.CreateVertical` / `CreateVerticalBox` |
+| `EditorGUILayoutActions.ActionEditorVerticalBox` | `EditorLayoutElements.CreateVerticalScrollBox` |
+| `ToggleEnumerator<T>.SelectEnumeratedToggles` | `ToggleEnumerator<T>.CreateEnumeratedToggles` |
+| `EditorDropdownController<T>.Dropdown` | `EditorDropdownController<T>.CreateDropdown` |
 
 ### Icon Creator
 

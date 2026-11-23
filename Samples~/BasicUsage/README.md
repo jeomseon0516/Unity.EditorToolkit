@@ -6,14 +6,17 @@
 
 ## 확인 항목
 
-1. **`ToggleEnumerator<T>` + `GUIStyleTexture`**: 과일 이름 3개를 토글로 나열합니다.
-   하나를 선택하면 `GUIStyleTexture.Create`로 생성된 배경색으로 강조되고,
-   "Selected" 라벨에 선택된 값이 표시됩니다.
-2. **`EditorDropdownController<T>`**: "Priority" 드롭다운에서 옵션을 선택하면
+창은 `CreateGUI()`(UI Toolkit)로 구성되며, 아래 1~4번은 각 IMGUI helper의 UI Toolkit판을 사용합니다.
+IMGUI판(`SelectEnumeratedToggles`, `Dropdown`, `EditorGUILayoutActions`)은 IMGUI 호스트용으로 그대로 제공됩니다.
+
+1. **`ToggleEnumerator<T>.CreateEnumeratedToggles`**: 과일 이름 3개를 토글 버튼으로 나열합니다.
+   하나를 선택하면 지정한 배경색으로 강조되고, "Selected" 라벨에 선택된 값이 표시됩니다.
+   선택된 항목을 다시 누르면 선택이 해제되어 "(none)"이 표시됩니다.
+2. **`EditorDropdownController<T>.CreateDropdown`**: "Priority" 드롭다운에서 옵션을 선택하면
    "Selected Value" 라벨이 즉시 갱신됩니다.
-3. **`EditorGUILayoutActions.ActionEditorVerticalBox`**: 10줄짜리 목록이
-   테두리가 있는 박스 안에서 스크롤되는지 확인합니다.
-4. **`EditorGUILayoutActions.ActionEditorVertical`**: `HelpBox`가 박스 스타일의
+3. **`EditorLayoutElements.CreateVerticalScrollBox`**: 10줄짜리 목록이
+   테두리가 있는 박스(높이 80) 안에서 스크롤되는지 확인합니다.
+4. **`EditorLayoutElements.CreateVerticalBox`**: `HelpBox`가 박스 스타일의
    세로 그룹 안에 감싸져 표시되는지 확인합니다.
 5. **`EditorTypeDiscovery`**: "Discover Concrete Component Types" 버튼을 누르면
    현재 프로젝트의 구체적인 `Component` 파생 타입 개수와 상위 5개 이름이 표시됩니다.

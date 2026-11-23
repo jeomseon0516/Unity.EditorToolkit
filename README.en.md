@@ -23,7 +23,7 @@ This differs from runtime SpriteAtlas packing. Reference Editor APIs only from E
 ## Requirements
 
 - Unity `6000.6.0f1`
-- Package: `com.jeomseon.unity.editor-toolkit` `0.7.3`
+- Package: `com.jeomseon.unity.editor-toolkit` `0.8.0`
 - `com.jeomseon.unity.core`: `0.3.2`
 - `com.unity.2d.sprite`: `1.0.0`
 - `com.unity.ugui`: `2.0.0`
@@ -44,7 +44,7 @@ Merge this into your project's `Packages/manifest.json`; preserve existing depen
     }
   ],
   "dependencies": {
-    "com.jeomseon.unity.editor-toolkit": "0.7.3"
+    "com.jeomseon.unity.editor-toolkit": "0.8.0"
   }
 }
 ```
@@ -52,7 +52,7 @@ Merge this into your project's `Packages/manifest.json`; preserve existing depen
 Or use **Install package from git URL** in Package Manager:
 
 ```text
-https://github.com/jeomseon0516/Unity.EditorToolkit.git#v0.7.3
+https://github.com/jeomseon0516/Unity.EditorToolkit.git#v0.8.0
 ```
 
 ## Design and behavior
@@ -92,6 +92,17 @@ Object Naming Changer, and Bulk Component Remover change project objects; verify
 The sample EditorWindow demonstrates the basic shared API behavior.
 
 ## API usage and details
+
+The public IMGUI helpers remain available for IMGUI hosts, and each now has a UI Toolkit
+counterpart with the same behavior. The UI Toolkit versions return a `VisualElement`, so call
+them from `CreateGUI()`/`CreateInspectorGUI()`/`CreatePropertyGUI()`.
+
+| IMGUI helper | UI Toolkit counterpart |
+| --- | --- |
+| `EditorGUILayoutActions.ActionEditorVertical` | `EditorLayoutElements.CreateVertical` / `CreateVerticalBox` |
+| `EditorGUILayoutActions.ActionEditorVerticalBox` | `EditorLayoutElements.CreateVerticalScrollBox` |
+| `ToggleEnumerator<T>.SelectEnumeratedToggles` | `ToggleEnumerator<T>.CreateEnumeratedToggles` |
+| `EditorDropdownController<T>.Dropdown` | `EditorDropdownController<T>.CreateDropdown` |
 
 ### Icon Creator
 

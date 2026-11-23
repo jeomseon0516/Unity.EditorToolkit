@@ -1,5 +1,10 @@
 # 변경 기록
 
+## [0.8.0] - 2026-11-23
+
+- ScriptableObject Viewer와 인라인 Inspector에서 공유 자산을 표시하는 UI Toolkit 호스트를 추가했습니다.
+- 기존 IMGUI helper와 함께 UI Toolkit 레이아웃, 토글 및 드롭다운 API를 제공합니다.
+
 ## [0.7.3] - 2026-09-03
 
 - `com.unity.ugui` 의존성 핀이 `1.0.0`(Unity 2022 시절 값)으로 남아 있어, Unity 6000.6 소비
