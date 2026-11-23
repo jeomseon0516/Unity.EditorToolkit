@@ -23,7 +23,7 @@ SpriteAtlas의 런타임 패킹과 목적이 다릅니다. Editor API는 Editor 
 ## 요구 사항
 
 - Unity `6000.6.0f1`
-- 패키지: `com.jeomseon.unity.editor-toolkit` `0.7.3`
+- 패키지: `com.jeomseon.unity.editor-toolkit` `0.8.0`
 - `com.jeomseon.unity.core`: `0.3.2`
 - `com.unity.2d.sprite`: `1.0.0`
 - `com.unity.ugui`: `2.0.0`
@@ -44,7 +44,7 @@ SpriteAtlas의 런타임 패킹과 목적이 다릅니다. Editor API는 Editor 
     }
   ],
   "dependencies": {
-    "com.jeomseon.unity.editor-toolkit": "0.7.3"
+    "com.jeomseon.unity.editor-toolkit": "0.8.0"
   }
 }
 ```
@@ -52,7 +52,7 @@ SpriteAtlas의 런타임 패킹과 목적이 다릅니다. Editor API는 Editor 
 또는 Package Manager의 **Install package from git URL**을 사용합니다:
 
 ```text
-https://github.com/jeomseon0516/Unity.EditorToolkit.git#v0.7.3
+https://github.com/jeomseon0516/Unity.EditorToolkit.git#v0.8.0
 ```
 
 ## 설계와 동작
